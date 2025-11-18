@@ -1,10 +1,15 @@
-﻿namespace MediaReview
+﻿using MediaReview.Server;
+using MediaReview.Handlers;
+
+namespace MediaReview
 {
     internal class Program
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello, World!");
+            HttpRestServer server = new();
+            server.RequestReceived += Handler.HandleEvent;
+            server.Run();
         }
     }
 }
