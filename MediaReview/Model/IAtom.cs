@@ -1,0 +1,14 @@
+using MediaReview.System;
+
+namespace MediaReview.Model;
+
+public interface IAtom
+{
+    public void BeginEdit(Session session);
+    
+    public void Save();
+    
+    public void Delete();
+    
+    public void Refresh();
+}

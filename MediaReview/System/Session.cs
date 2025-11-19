@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+using MediaReview.Model;
 
 namespace MediaReview.System;
 
@@ -37,7 +37,20 @@ public sealed class Session
     
     public static Session? Create(string userName, string password)
     {
-        return new Session(userName, password);
+        var user = User.Get(userName);
+        if (user == null) return null;
+
+        string hash = User._HashPassword(userName, password);
+
+        if (user._PasswordHash != hash) return null;
+
+        var session = new Session(userName, password);
+        lock (_Sessions)
+        {
+            _Sessions[session.Token] = session;
+        }
+
+        return session;
     }
 
     public static Session? Get(string token)
