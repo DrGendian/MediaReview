@@ -42,6 +42,43 @@ public sealed class SessionHandler: Handler, IHandler
                     Console.WriteLine(
                         $"[{nameof(VersionHandler)}] Exception creating session. {e.Method.ToString()} {e.Path}: {ex.Message}");
                 }
+            }else if (e.Path == "/logout" && e.Method == HttpMethod.Post)
+            {
+                try
+                {
+                    string token = e.Context.Request.Headers["Authorization"]?.Replace("Bearer ", "") ?? "";
+
+                    
+                    if (string.IsNullOrWhiteSpace(token))
+                    {
+                        throw new ArgumentException("No token provided.");
+                    }
+
+                    Session? session = Session.Get(token);
+
+                    if (session == null || !session.Valid)
+                    {
+                        e.Respond(HttpStatusCode.Unauthorized,
+                            new JsonObject() { ["success"] = false, ["reason"] = "Invalid or expired session." });
+                        return;
+                    }
+                    
+                    session.Close();
+                    e.Respond(HttpStatusCode.OK, new JsonObject() { ["success"] = true });
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine($"[{nameof(VersionHandler)}] Session ended.");
+                }
+                catch (Exception ex)
+                {
+                    if (!e.Responded)
+                    {
+                        e.Respond(HttpStatusCode.InternalServerError,
+                            new JsonObject() { ["success"] = false, ["reason"] = ex.Message });
+                    }
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(
+                        $"[{nameof(VersionHandler)}] Exception creating session. {e.Method.ToString()} {e.Path}: {ex.Message}");
+                }
             }
             else
             {

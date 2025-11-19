@@ -86,9 +86,14 @@ public sealed class Session
     
     public void Close()
     {
+        bool removed = false;
         lock(_Sessions)
         {
-            if(_Sessions.ContainsKey(Token)) { _Sessions.Remove(Token); }
+            removed = _Sessions.Remove(Token);
+        }
+        if (removed)
+        {
+            Console.WriteLine($"Session {Token} removed");
         }
     }
 }
