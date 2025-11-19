@@ -24,14 +24,14 @@ public sealed class SessionHandler: Handler, IHandler
                             new JsonObject() { ["success"] = "false", ["reason"] = "Invalid username or password" });
                         Console.ForegroundColor = ConsoleColor.Red;
                         Console.WriteLine(
-                            $"[{nameof(VersionHandler)} Invalid login attempt. {e.Method.ToString()} {e.Path}.");
+                            $"[{nameof(VersionHandler)}] Invalid login attempt. {e.Method.ToString()} {e.Path}.");
                     }
                     else
                     {
                         e.Respond(HttpStatusCode.OK,
                             new JsonObject() { ["success"] = "true", ["token"] = session.Token });
                         Console.ForegroundColor = ConsoleColor.Blue;
-                        Console.WriteLine($"[{nameof(VersionHandler)} Handled {e.Method.ToString()} {e.Path}.");
+                        Console.WriteLine($"[{nameof(VersionHandler)}] Handled {e.Method.ToString()} {e.Path}.");
                     }
                 }
                 catch (Exception ex)
@@ -40,7 +40,7 @@ public sealed class SessionHandler: Handler, IHandler
                         new JsonObject() { ["success"] = false, ["reason"] = ex.Message });
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine(
-                        $"[{nameof(VersionHandler)} Exception creating session. {e.Method.ToString()} {e.Path}: {ex.Message}");
+                        $"[{nameof(VersionHandler)}] Exception creating session. {e.Method.ToString()} {e.Path}: {ex.Message}");
                 }
             }
             else
