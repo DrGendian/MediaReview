@@ -35,6 +35,18 @@ public class User : Atom, IAtom
             return null;
         }
     }
+    
+    public static String GetAll(Session? session = null)
+    {
+        
+        lock (_Users)
+        {
+            return string.Join(Environment.NewLine,
+                _Users.Values.Select(u =>
+                    $"UserName: {u.UserName}, FullName: {u.FullName}, Email: {u.EMail}"
+                ));
+        }
+    }
 
     public static User Create(string userName, string password, Session? session = null)
     {
