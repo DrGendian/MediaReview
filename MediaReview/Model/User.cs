@@ -26,6 +26,15 @@ public class User : Atom, IAtom
     {
         return Database.Instance.GetUser(userName);
     }
+
+    public static User GetUser(string userName, Session? session = null)
+    {
+        if ((session.Valid) && (session.IsAdmin || session.UserName == userName))
+        {
+            return Database.Instance.GetUser(userName);
+        }
+        return null;
+    }
     
     public static String GetAll(Session? session = null)
     {
@@ -55,7 +64,6 @@ public class User : Atom, IAtom
         User user = new User(session);
         user.UserName = userName;
         user._PasswordHash = _HashPassword(userName, password);
-        Database.Instance.AddUser(user);
         return user;
     }
 
@@ -95,12 +103,14 @@ public class User : Atom, IAtom
 
     public void SetPassword(string password)
     {
+        _EnsureAdminOrOwner(UserName);
         _PasswordHash = _HashPassword(UserName, password);
     }
 
     public override void Save()
     {
         if(!_New) { _EnsureAdminOrOwner(UserName); }
+        Database.Instance.SaveUser(this);
         _EndEdit();
     }
 

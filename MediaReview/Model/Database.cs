@@ -45,16 +45,24 @@ public class Database
         }
     }
     
-    public void AddUser(User user)
+    public void SaveUser(User user)
     {
         lock (_users)
         {
-            _users.Add(user.UserName, user);
+            if (!_users.ContainsKey(user.UserName))
+            {
+                _users.Add(user.UserName, user);
+            }
+            else
+            {
+                _users[user.UserName] = user;
+            }
         }
     }
 
     public bool UserExists(string userName)
     {
+        lock (_users);
         return _users.ContainsKey(userName);
     }
 }

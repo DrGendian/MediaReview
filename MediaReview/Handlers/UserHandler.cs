@@ -25,9 +25,12 @@ public class UserHandler: Handler, IHandler
                     return;
                 }
 
-                User.Create(username, password);
-                
+                User user = User.Create(username, password);
+                user.Save();
+                    
                 e.Respond(HttpStatusCode.OK, new JsonObject { ["success"] = true });
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine($"[{nameof(VersionHandler)}] User registration success.");
                 e.Responded = true;
             }
             catch(Exception ex)
@@ -64,9 +67,57 @@ public class UserHandler: Handler, IHandler
                 var userList = User.GetAll(session);
                 
                 e.Respond(HttpStatusCode.OK, new JsonObject { ["success"] = true, ["content"] = userList });
-                
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine($"[{nameof(VersionHandler)}] User list success.");
                 e.Responded = true;
                 
+            }
+            catch (Exception ex)
+            {
+                e.Respond(HttpStatusCode.InternalServerError, new JsonObject { ["success"] = false, ["reason"] = ex.Message });
+                e.Responded = true;
+            }
+            
+        }else if (e.Path == "/edit" && e.Method == HttpMethod.Put)
+        {
+            try
+            {
+                string token = e.Context.Request.Headers["Authorization"]?.Replace("Bearer ", "") ?? "";
+                string userName = e.Content["username"]?.GetValue<string>() ?? "";
+                string fullname = e.Content["fullname"]?.GetValue<string>() ?? "";
+                string email = e.Content["email"]?.GetValue<string>() ?? "";
+                string password = e.Content["password"]?.GetValue<string>() ?? "";
+            
+                Session session = Session.Get(token);
+
+                if (!session.Valid)
+                {
+                    e.Respond(HttpStatusCode.Unauthorized,
+                        new JsonObject() { ["success"] = false, ["reason"] = "Invalid or expired session." });
+                    e.Responded = true;
+                    return;
+                }
+            
+                User user = User.GetUser(userName, session);
+
+                if (user == null)
+                {
+                    e.Respond(HttpStatusCode.Unauthorized,
+                        new JsonObject() { ["success"] = false, ["reason"] = "User not found." });
+                    e.Responded = true;
+                    return;
+                }
+            
+                if (!string.IsNullOrWhiteSpace(fullname)) user.FullName = fullname;
+                if (!string.IsNullOrWhiteSpace(email)) user.EMail = email;
+                if (!string.IsNullOrWhiteSpace(password)) user.SetPassword(password);
+                user.Save();
+                
+                e.Respond(HttpStatusCode.OK, new JsonObject() { ["success"] = true});
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine($"[{nameof(VersionHandler)}] User edit success.");
+            
+                e.Responded = true;
             }
             catch (Exception ex)
             {
