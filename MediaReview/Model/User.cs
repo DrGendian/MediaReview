@@ -6,7 +6,6 @@ namespace MediaReview.Model;
 
 public class User : Atom, IAtom
 {
-    private static readonly Dictionary<string, User> _Users = new();
     
     public string? _UserName { get; private set; }= null;
 
@@ -25,51 +24,39 @@ public class User : Atom, IAtom
 
     public static User Get(string userName, Session? session = null)
     {
-        
-        lock (_Users)
-        {
-            if (_Users.TryGetValue(userName, out var user))
-            {
-                return user;
-            }
-            return null;
-        }
+        return Database.Instance.GetUser(userName);
     }
     
     public static String GetAll(Session? session = null)
     {
+        var users = Database.Instance.GetAllUsers();
         
-        lock (_Users)
+        lock (users)
         {
             return string.Join(Environment.NewLine,
-                _Users.Values.Select(u =>
+                users.Values.Select(u =>
                     $"UserName: {u.UserName}, FullName: {u.FullName}, Email: {u.EMail}"
                 ));
         }
     }
 
-    public static User Create(string userName, string password, Session? session = null)
-    {
-        lock (_Users)
-        {
-            if (_Users.ContainsKey(userName))
-                throw new Exception("User already exists");
-
-            User user = new User(session);
-            user.UserName = userName;
-            user._PasswordHash = _HashPassword(userName, password);
-            _Users.Add(userName, user);
-            return user;
-        }
-        
-    }
-
     public static bool Exists(string userName)
     {
-        lock (_Users)
+        return Database.Instance.UserExists(userName);
+    }
+
+    public static User Create(string userName, string password, Session? session = null)
+    {
+        if (Database.Instance.UserExists(userName))
         {
-            return _Users.ContainsKey(userName);
+            throw new Exception("User already exists");
         }
+
+        User user = new User(session);
+        user.UserName = userName;
+        user._PasswordHash = _HashPassword(userName, password);
+        Database.Instance.AddUser(user);
+        return user;
     }
 
     public string UserName
