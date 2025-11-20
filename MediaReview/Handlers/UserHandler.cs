@@ -24,7 +24,7 @@ public class UserHandler: Handler, IHandler
                     e.Respond(HttpStatusCode.Conflict, new JsonObject { ["success"] = false, ["reason"] = "User already exists" });
                     return;
                 }
-
+                
                 User user = User.Create(username, password);
                 user.Save();
                     
@@ -108,6 +108,7 @@ public class UserHandler: Handler, IHandler
                     return;
                 }
             
+                user.BeginEdit(session);
                 if (!string.IsNullOrWhiteSpace(fullname)) user.FullName = fullname;
                 if (!string.IsNullOrWhiteSpace(email)) user.EMail = email;
                 if (!string.IsNullOrWhiteSpace(password)) user.SetPassword(password);
@@ -125,8 +126,37 @@ public class UserHandler: Handler, IHandler
                 e.Responded = true;
             }
             
+        }else if (e.Path == "/delete" && e.Method == HttpMethod.Delete)
+        {
+            try
+            {
+                string token = e.Context.Request.Headers["Authorization"]?.Replace("Bearer ", "") ?? "";
+                string userName = e.Content["username"]?.GetValue<string>() ?? "";
+                
+                Session session = Session.Get(token);
+
+                if (!session.Valid)
+                {
+                    e.Respond(HttpStatusCode.Unauthorized,
+                        new JsonObject() { ["success"] = false, ["reason"] = "Invalid or expired session." });
+                    e.Responded = true;
+                    return;
+                }
+                
+                User user = User.GetUser(userName, session);
+                user.BeginEdit(session);
+                user.Delete();
+                e.Respond(HttpStatusCode.OK, new JsonObject() { ["success"] = true});
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine($"[{nameof(VersionHandler)}] User delete success.");
+                
+                e.Responded = true;
+            }
+            catch (Exception ex)
+            {
+                e.Respond(HttpStatusCode.InternalServerError, new JsonObject { ["success"] = false, ["reason"] = ex.Message });
+                e.Responded = true;
+            }
         }
-        
-        
     }
 }

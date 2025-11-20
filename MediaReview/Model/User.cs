@@ -24,6 +24,7 @@ public class User : Atom, IAtom
 
     public static User Get(string userName, Session? session = null)
     {
+        
         return Database.Instance.GetUser(userName);
     }
 
@@ -31,7 +32,9 @@ public class User : Atom, IAtom
     {
         if ((session.Valid) && (session.IsAdmin || session.UserName == userName))
         {
-            return Database.Instance.GetUser(userName);
+            var u = Database.Instance.GetUser(userName);
+            u._New = false;
+            return u;
         }
         return null;
     }
@@ -118,6 +121,8 @@ public class User : Atom, IAtom
     {
         _EnsureAdminOrOwner(UserName);
 
+        Database.Instance.DeleteUser(UserName);
+        
         _EndEdit();
     }
 

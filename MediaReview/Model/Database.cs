@@ -65,4 +65,21 @@ public class Database
         lock (_users);
         return _users.ContainsKey(userName);
     }
+
+    public bool DeleteUser(string userName)
+    {
+        try
+        {
+            lock (_users)
+            {
+                _users.Remove(userName);
+            }
+            
+            return true;
+        }
+        catch (Exception ex)
+        {
+            return false;
+        }
+    }
 }
