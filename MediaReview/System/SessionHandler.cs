@@ -9,10 +9,8 @@ public sealed class SessionHandler: Handler, IHandler
 {
     public override void Handle(HttpRestEventArgs e)
     {
-        if (e.Path.StartsWith("/sessions"))
+        if ((e.Path == "/login") && (e.Method == HttpMethod.Post))
         {
-            if ((e.Path == "/sessions") && (e.Method == HttpMethod.Post))
-            {
                 try
                 {
                     Session? session = Session.Create(e.Content["username"]?.GetValue<string>() ?? string.Empty,
@@ -33,6 +31,8 @@ public sealed class SessionHandler: Handler, IHandler
                         Console.ForegroundColor = ConsoleColor.Blue;
                         Console.WriteLine($"[{nameof(VersionHandler)}] Handled {e.Method.ToString()} {e.Path}.");
                     }
+                    
+                    e.Responded = true;
                 }
                 catch (Exception ex)
                 {
@@ -41,9 +41,10 @@ public sealed class SessionHandler: Handler, IHandler
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine(
                         $"[{nameof(VersionHandler)}] Exception creating session. {e.Method.ToString()} {e.Path}: {ex.Message}");
+                    e.Responded = true;
                 }
-            }else if (e.Path == "/logout" && e.Method == HttpMethod.Post)
-            {
+        }else if (e.Path == "/logout" && e.Method == HttpMethod.Get)
+        {
                 try
                 {
                     string token = e.Context.Request.Headers["Authorization"]?.Replace("Bearer ", "") ?? "";
@@ -51,6 +52,7 @@ public sealed class SessionHandler: Handler, IHandler
                     
                     if (string.IsNullOrWhiteSpace(token))
                     {
+                        Console.WriteLine($"[{nameof(VersionHandler)}] No token provided.");
                         throw new ArgumentException("No token provided.");
                     }
 
@@ -67,6 +69,7 @@ public sealed class SessionHandler: Handler, IHandler
                     e.Respond(HttpStatusCode.OK, new JsonObject() { ["success"] = true });
                     Console.ForegroundColor = ConsoleColor.Green;
                     Console.WriteLine($"[{nameof(VersionHandler)}] Session ended.");
+                    e.Responded = true;
                 }
                 catch (Exception ex)
                 {
@@ -78,17 +81,8 @@ public sealed class SessionHandler: Handler, IHandler
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine(
                         $"[{nameof(VersionHandler)}] Exception creating session. {e.Method.ToString()} {e.Path}: {ex.Message}");
+                    e.Responded = true;
                 }
-            }
-            else
-            {
-                e.Respond(HttpStatusCode.BadRequest,
-                    new JsonObject() { ["success"] = false, ["reason"] = "Invalid session endpoint." });
-
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"[{nameof(VersionHandler)}] Invalid session endpoint.");
-            }
-            e.Responded = true;
         }
     }
 }

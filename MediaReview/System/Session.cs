@@ -94,6 +94,9 @@ public sealed class Session
         if (removed)
         {
             Console.WriteLine($"Session {Token} removed");
+            return;
         }
+        
+        Console.WriteLine($"Session {Token} could not be closed");
     }
 }
