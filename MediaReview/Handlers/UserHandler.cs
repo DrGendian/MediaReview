@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json.Nodes;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using MediaReview.Server;
 using MediaReview.System;
 using MediaReview.Model;
@@ -9,10 +10,10 @@ namespace MediaReview.Handlers;
 
 public class UserHandler: Handler, IHandler
 {
-    
+    private const string RoutePrefix = "/api/users";
     public override void Handle(HttpRestEventArgs e)
     {
-        if (e.Path == "/register" && e.Method == HttpMethod.Post)
+        if (e.Path == $"{RoutePrefix}/register" && e.Method == HttpMethod.Post)
         {
             try
             {
@@ -22,13 +23,14 @@ public class UserHandler: Handler, IHandler
                 if(User.Exists(username))
                 {
                     e.Respond(HttpStatusCode.Conflict, new JsonObject { ["success"] = false, ["reason"] = "User already exists" });
+                    e.Responded = true;
                     return;
                 }
                 
                 User user = User.Create(username, password);
                 user.Save();
                     
-                e.Respond(HttpStatusCode.OK, new JsonObject { ["success"] = true });
+                e.Respond(HttpStatusCode.Created, new JsonObject { ["success"] = true, ["description"] = "User registered." });
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine($"[{nameof(VersionHandler)}] User registration success.");
                 e.Responded = true;
@@ -38,7 +40,7 @@ public class UserHandler: Handler, IHandler
                 e.Respond(HttpStatusCode.InternalServerError, new JsonObject { ["success"] = false, ["reason"] = ex.Message });
                 e.Responded = true;
             }
-        }else if (e.Path == "/users" && e.Method == HttpMethod.Get)
+        }else if (e.Path == $"{RoutePrefix}/users" && e.Method == HttpMethod.Get)
         {
             try
             {
@@ -51,7 +53,7 @@ public class UserHandler: Handler, IHandler
                 }
                 Session? session = Session.Get(token);
 
-                if (!session.Valid)
+                if (session == null || !session.Valid)
                 {
                     e.Respond(HttpStatusCode.Unauthorized,
                         new JsonObject() { ["success"] = false, ["reason"] = "Invalid or expired session." });
@@ -78,19 +80,24 @@ public class UserHandler: Handler, IHandler
                 e.Responded = true;
             }
             
-        }else if (e.Path == "/edit" && e.Method == HttpMethod.Put)
+        }else if ((Regex.Match(e.Path, @"^/api/users/(?<id>[^/]+)/profile$")).Success && e.Method == HttpMethod.Get)
         {
             try
             {
-                string token = e.Context.Request.Headers["Authorization"]?.Replace("Bearer ", "") ?? "";
-                string userName = e.Content["username"]?.GetValue<string>() ?? "";
-                string fullname = e.Content["fullname"]?.GetValue<string>() ?? "";
-                string email = e.Content["email"]?.GetValue<string>() ?? "";
-                string password = e.Content["password"]?.GetValue<string>() ?? "";
+                var match = Regex.Match(e.Path, @"^/api/users/(?<id>[^/]+)/profile$");
+                string userId = match.Groups["id"].Value;
             
-                Session session = Session.Get(token);
-
-                if (!session.Valid)
+            
+                string token = e.Context.Request.Headers["Authorization"]?.Replace("Bearer ", "") ?? "";
+                    
+                if (string.IsNullOrWhiteSpace(token))
+                {
+                    Console.WriteLine($"[{nameof(VersionHandler)}] No token provided.");
+                    throw new ArgumentException("No token provided.");
+                }
+                Session? session = Session.Get(token);
+            
+                if (session == null || !session.Valid)
                 {
                     e.Respond(HttpStatusCode.Unauthorized,
                         new JsonObject() { ["success"] = false, ["reason"] = "Invalid or expired session." });
@@ -98,7 +105,64 @@ public class UserHandler: Handler, IHandler
                     return;
                 }
             
-                User user = User.GetUser(userName, session);
+                User user = User.GetUser(userId, session);
+
+                if (user == null)
+                {
+                    e.Respond(HttpStatusCode.Unauthorized,
+                        new JsonObject() { ["success"] = false, ["reason"] = "User not found." });
+                    e.Responded = true;
+                    return;
+                }
+            
+                e.Respond(HttpStatusCode.OK, new JsonObject
+                {
+                    ["success"] = true,
+                    ["content"] = new JsonObject
+                    {
+                        ["id"] = user._userId,
+                        ["username"] = user.UserName,
+                        ["fullname"] = user.FullName,
+                        ["email"] = user.EMail
+                    }
+                });
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine($"[{nameof(VersionHandler)}] User profile success.");
+                e.Responded = true;
+
+            }
+            catch (Exception ex)
+            {
+                e.Respond(HttpStatusCode.InternalServerError,
+                    new JsonObject() { ["success"] = false, ["reason"] = ex.Message });
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(
+                    $"[{nameof(VersionHandler)}] Exception getting user. {e.Method.ToString()} {e.Path}: {ex.Message}");
+                e.Responded = true;
+            }
+        }else if ((Regex.Match(e.Path, @"^/api/users/(?<id>[^/]+)/profile$")).Success && e.Method == HttpMethod.Put)
+        {
+            try
+            {
+                var match = Regex.Match(e.Path, @"^/api/users/(?<id>[^/]+)/profile$");
+                string userId = match.Groups["id"].Value;
+                
+                string token = e.Context.Request.Headers["Authorization"]?.Replace("Bearer ", "") ?? "";
+                string fullname = e.Content["fullname"]?.GetValue<string>() ?? "";
+                string email = e.Content["email"]?.GetValue<string>() ?? "";
+                string password = e.Content["password"]?.GetValue<string>() ?? "";
+            
+                Session? session = Session.Get(token);
+
+                if (session == null || !session.Valid)
+                {
+                    e.Respond(HttpStatusCode.Unauthorized,
+                        new JsonObject() { ["success"] = false, ["reason"] = "Invalid or expired session." });
+                    e.Responded = true;
+                    return;
+                }
+            
+                User user = User.GetUser(userId, session);
 
                 if (user == null)
                 {
@@ -126,12 +190,13 @@ public class UserHandler: Handler, IHandler
                 e.Responded = true;
             }
             
-        }else if (e.Path == "/delete" && e.Method == HttpMethod.Delete)
+        }else if ((Regex.Match(e.Path, @"^/api/users/(?<id>[^/]+)/delete$")).Success && e.Method == HttpMethod.Delete)
         {
             try
             {
+                var match = Regex.Match(e.Path, @"^/api/users/(?<id>[^/]+)/delete$");
+                string userId = match.Groups["id"].Value;
                 string token = e.Context.Request.Headers["Authorization"]?.Replace("Bearer ", "") ?? "";
-                string userName = e.Content["username"]?.GetValue<string>() ?? "";
                 
                 Session session = Session.Get(token);
 
@@ -143,7 +208,7 @@ public class UserHandler: Handler, IHandler
                     return;
                 }
                 
-                User user = User.GetUser(userName, session);
+                User user = User.GetUser(userId, session);
                 user.BeginEdit(session);
                 user.Delete();
                 e.Respond(HttpStatusCode.OK, new JsonObject() { ["success"] = true});

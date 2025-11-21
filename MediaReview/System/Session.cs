@@ -24,6 +24,8 @@ public sealed class Session
     
     public string Token { get; }
     
+    public int UserId { get; }
+    
     public string UserName { get; }
     
     public DateTime Timestamp { get; private set; }
@@ -40,9 +42,7 @@ public sealed class Session
         var user = User.Get(userName);
         if (user == null) return null;
 
-        string hash = User._HashPassword(userName, password);
-
-        if (user._PasswordHash != hash) return null;
+        if (!(user.checkPassword(userName, password))) return null;
 
         var session = new Session(userName, password);
         lock (_Sessions)

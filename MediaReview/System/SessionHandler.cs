@@ -7,9 +7,10 @@ namespace MediaReview.System;
 
 public sealed class SessionHandler: Handler, IHandler
 {
+    private const string RoutePrefix = "/api/users";
     public override void Handle(HttpRestEventArgs e)
-    {
-        if ((e.Path == "/login") && (e.Method == HttpMethod.Post))
+    { 
+        if ((e.Path == $"{RoutePrefix}/login") && (e.Method == HttpMethod.Post))
         {
                 try
                 {

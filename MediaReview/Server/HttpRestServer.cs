@@ -6,10 +6,10 @@ namespace MediaReview.Server
     {
         private readonly HttpListener _Listener;
 
-        public HttpRestServer(int port = 12000)
+        public HttpRestServer(int port = 8080)
         {
             _Listener = new();
-            _Listener.Prefixes.Add($"http://+:{port}/");
+            _Listener.Prefixes.Add($"http://+:{port}/api/");
         }
 
         public event EventHandler<HttpRestEventArgs>? RequestReceived;

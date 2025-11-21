@@ -6,12 +6,12 @@ namespace MediaReview.Model;
 
 public class User : Atom, IAtom
 {
-    
-    public string? _UserName { get; private set; }= null;
+    public int _userId = 0;
+    private string? _UserName { get; set; }= null;
 
     private bool _New;
 
-    public string? _PasswordHash { get; private set; } = null;
+    private string? _PasswordHash { get; set; } = null;
 
 
 
@@ -28,7 +28,7 @@ public class User : Atom, IAtom
         return Database.Instance.GetUser(userName);
     }
 
-    public static User GetUser(string userName, Session? session = null)
+    public static User GetUser(string userName, Session session)
     {
         if ((session.Valid) && (session.IsAdmin || session.UserName == userName))
         {
@@ -39,8 +39,10 @@ public class User : Atom, IAtom
         return null;
     }
     
-    public static String GetAll(Session? session = null)
+    public static String GetAll(Session session)
     {
+        //if (!session.Valid && !session.IsAdmin) throw new UnauthorizedAccessException("Admin privileges required.");
+        
         var users = Database.Instance.GetAllUsers();
         
         lock (users)
@@ -90,6 +92,11 @@ public class User : Atom, IAtom
             rval.Append(i.ToString("x2"));
         }
         return rval.ToString();
+    }
+
+    public bool checkPassword(string username, string password)
+    {
+        return ((_HashPassword(username, password)) == _PasswordHash);
     }
 
     public string FullName
