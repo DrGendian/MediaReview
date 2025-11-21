@@ -51,7 +51,7 @@ public class UserHandler: Handler, IHandler
                 }
                 Session? session = Session.Get(token);
 
-                if (!session.Valid)
+                if (session == null || !session.Valid)
                 {
                     e.Respond(HttpStatusCode.Unauthorized,
                         new JsonObject() { ["success"] = false, ["reason"] = "Invalid or expired session." });
@@ -90,7 +90,7 @@ public class UserHandler: Handler, IHandler
             
                 Session session = Session.Get(token);
 
-                if (!session.Valid)
+                if (session == null || !session.Valid)
                 {
                     e.Respond(HttpStatusCode.Unauthorized,
                         new JsonObject() { ["success"] = false, ["reason"] = "Invalid or expired session." });
@@ -135,7 +135,7 @@ public class UserHandler: Handler, IHandler
                 
                 Session session = Session.Get(token);
 
-                if (!session.Valid)
+                if (session == null || !session.Valid)
                 {
                     e.Respond(HttpStatusCode.Unauthorized,
                         new JsonObject() { ["success"] = false, ["reason"] = "Invalid or expired session." });
