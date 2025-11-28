@@ -82,4 +82,17 @@ public class Database
             return false;
         }
     }
+
+
+    public Media GetMedia(int mediaId)
+    {
+        lock (_medias)
+        {
+            if (_medias.TryGetValue(mediaId, out var media))
+            {
+                return media;
+            }
+            return null;
+        }
+    }
 }

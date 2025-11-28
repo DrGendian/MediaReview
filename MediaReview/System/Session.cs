@@ -36,6 +36,15 @@ public sealed class Session
     }
 
     public bool IsAdmin { get; }
+
+    public static void VerifySession(string token)
+    {
+        _Cleanup();
+        if (!_Sessions.ContainsKey(token))
+        {
+            throw new UnauthorizedAccessException("Invalid or expired session.");
+        }
+    }
     
     public static Session? Create(string userName, string password)
     {

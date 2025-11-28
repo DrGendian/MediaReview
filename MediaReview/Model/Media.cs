@@ -10,6 +10,11 @@ public class Media : Atom, IAtom
         _VerifySession(session);
     }
 
+    public Media Get()
+    {
+        return this;
+    }
+
     public override void Save()
     {
         
