@@ -10,6 +10,8 @@ public class Database
     Dictionary<int, Review> _reviews;
     Dictionary<int, Media> _medias;
 
+    #endregion
+
     #region Constructor
     private Database()
     {
@@ -33,7 +35,7 @@ public class Database
     {
         return _users;
     }
-
+    #endregion
     #region User Methods
     public User GetUser(string userName)
     {
@@ -84,7 +86,7 @@ public class Database
             return false;
         }
     }
-
+    #endregion
     #region Media Methods
     public Media GetMedia(int mediaId)
     {
@@ -97,4 +99,5 @@ public class Database
             return null;
         }
     }
+    #endregion
 }
