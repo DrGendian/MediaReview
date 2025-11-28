@@ -149,6 +149,70 @@ namespace MediaReview.Handlers
                     e.Responded = true;
                 }
                 
+            }else if (Regex.Match(e.Path, @"^/api/media/(?<id>[^/]+)$").Success && e.Method == HttpMethod.Put)
+            {
+                try
+                {
+                    string title = e.Content["title"]?.GetValue<string>() ?? "";
+                    string description = e.Content["description"]?.GetValue<string>() ?? "";
+                    string mediaType = e.Content["mediaType"]?.GetValue<string>() ?? "";
+                    int releaseYear = e.Content["releaseYear"]?.GetValue<int>() ?? 0;
+                    string[] genres = e.Content["genres"] is JsonArray genresArray 
+                        ? genresArray.Select(g => g?.GetValue<string>() ?? "").ToArray() 
+                        : Array.Empty<string>();
+
+                    int ageRestriction = e.Content["ageRestriction"]?.GetValue<int>() ?? 0;
+                    
+                    var match = Regex.Match(e.Path, @"^/api/media/(?<id>[^/]+)$");
+                    int mediaId = int.Parse(match.Groups["id"].Value);
+                    
+                    string token = e.Context.Request.Headers["Authorization"]?.Replace("Bearer ", "") ?? "";
+                    
+                    if (string.IsNullOrWhiteSpace(token))
+                    {
+                        Console.WriteLine($"[{nameof(VersionHandler)}] No token provided.");
+                        throw new ArgumentException("No token provided.");
+                    }
+
+                    Session.VerifySession(token);
+
+                    Session session = Session.Get(token);
+                    
+                    Media media = Media.GetMedia(mediaId, session);
+
+                    if (media == null)
+                    {
+                        e.Respond(HttpStatusCode.NotFound, new JsonObject
+                        {
+                            ["success"] = false,
+                            ["reason"] = "Media not found"
+                        });
+                        e.Responded = true;
+                        return;
+                    }
+                    media.BeginEdit(session);
+                    if(!string.IsNullOrWhiteSpace(title)) media.title = title;
+                    if(!string.IsNullOrWhiteSpace(description)) media.description = description;
+                    if(genres != Array.Empty<string>()) media.genres = genres;
+                    if(ageRestriction != 0) media.ageRestriction = ageRestriction;
+                    if(!string.IsNullOrWhiteSpace(mediaType)) media.mediaType = mediaType;
+                    if(releaseYear != 0) media.releaseYear = releaseYear;
+                    media.Save();
+                    
+                    e.Respond(HttpStatusCode.OK, new JsonObject { ["success"] = true, ["description"] = "Media entry updated." });
+                    e.Responded = true;
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine($"[{nameof(VersionHandler)}] Media updated.");
+                }
+                catch (Exception ex)
+                {
+                    e.Respond(HttpStatusCode.InternalServerError,
+                        new JsonObject() { ["success"] = false, ["reason"] = ex.Message });
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(
+                        $"[{nameof(VersionHandler)}] Exception updating media. {e.Method.ToString()} {e.Path}: {ex.Message}");
+                    e.Responded = true;
+                }
             }
         }
     }
