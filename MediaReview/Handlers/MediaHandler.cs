@@ -213,6 +213,43 @@ namespace MediaReview.Handlers
                         $"[{nameof(VersionHandler)}] Exception updating media. {e.Method.ToString()} {e.Path}: {ex.Message}");
                     e.Responded = true;
                 }
+            }else if (Regex.Match(e.Path, @"^/api/media/(?<id>[^/]+)$").Success && e.Method == HttpMethod.Delete)
+            {
+                try
+                {
+                    var match = Regex.Match(e.Path, @"^/api/media/(?<id>[^/]+)$");
+                    int mediaId = int.Parse(match.Groups["id"].Value);
+                    string token = e.Context.Request.Headers["Authorization"]?.Replace("Bearer ", "") ?? "";
+                    
+                    if (string.IsNullOrWhiteSpace(token))
+                    {
+                        Console.WriteLine($"[{nameof(VersionHandler)}] No token provided.");
+                        throw new ArgumentException("No token provided.");
+                    }
+
+                    Session.VerifySession(token);
+
+                    Session session = Session.Get(token);
+                    
+                    Media media = Media.GetMedia(mediaId, session);
+                    
+                    media.BeginEdit(session);
+                    media.Delete();
+
+                    e.Respond(HttpStatusCode.OK, new JsonObject { ["success"] = true, ["description"] = "Media entry deleted." });
+                    e.Responded = true;
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine($"[{nameof(VersionHandler)}] Media deleted.");
+                }
+                catch (Exception ex)
+                {
+                    e.Respond(HttpStatusCode.InternalServerError,
+                        new JsonObject() { ["success"] = false, ["reason"] = ex.Message });
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(
+                        $"[{nameof(VersionHandler)}] Exception deleting media. {e.Method.ToString()} {e.Path}: {ex.Message}");
+                    e.Responded = true;
+                }
             }
         }
     }

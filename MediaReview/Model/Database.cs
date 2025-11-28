@@ -129,5 +129,22 @@ public class Database
             }
         }
     }
+    
+    public bool DeleteMedia(int id)
+    {
+        try
+        {
+            lock (_users)
+            {
+                _medias.Remove(id);
+            }
+            
+            return true;
+        }
+        catch (Exception ex)
+        {
+            return false;
+        }
+    }
     #endregion
 }

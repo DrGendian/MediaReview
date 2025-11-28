@@ -52,7 +52,8 @@ public class Media : Atom, IAtom
 
     public override void Delete()
     {
-        
+        _EnsureAdminOrOwner(ownerName);
+        Database.Instance.DeleteMedia(id);
     }
 
     public override void Refresh()
