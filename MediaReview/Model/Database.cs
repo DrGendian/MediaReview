@@ -88,13 +88,16 @@ public class Database
     }
     #endregion
     #region Media Methods
-    public Media GetMedia(int mediaId)
+    public Media? GetMedia(int mediaId)
     {
         lock (_medias)
         {
-            if (_medias.TryGetValue(mediaId, out var media))
+            if (_medias.ContainsKey(mediaId))
             {
-                return media;
+                if (_medias.TryGetValue(mediaId, out var media))
+                {
+                    return media;
+                }
             }
             return null;
         }

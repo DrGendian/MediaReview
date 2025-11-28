@@ -26,11 +26,12 @@ public class Media : Atom, IAtom
         _VerifySession(session); 
     }
 
-    public static Media GetMedia(int id, Session session)
+    public static Media? GetMedia(int id, Session session)
     {
-        if ((session.Valid))
+        if (session.Valid)
         {
-            var media = Database.Instance.GetMedia(id);
+            Media? media = Database.Instance.GetMedia(id);
+            if (media == null) return null;
             media._New = false;
             return media;
         }

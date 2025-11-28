@@ -3,6 +3,7 @@ using System.Text.Json.Nodes;
 using MediaReview.Server;
 using MediaReview.System;
 using MediaReview.Model;
+using System.Text.RegularExpressions;
 
 namespace MediaReview.Handlers
 {
@@ -14,28 +15,36 @@ namespace MediaReview.Handlers
         {
             if (e.Path == $"{RoutePrefix}" && e.Method == HttpMethod.Get)
             {
-                string token = e.Context.Request.Headers["Authorization"]?.Replace("Bearer ", "") ?? "";
-
-                if (string.IsNullOrWhiteSpace(token))
+                try
                 {
-                    Console.WriteLine($"[{nameof(VersionHandler)}] No token provided.");
-                    throw new ArgumentException("No token provided.");
+                    throw new NotImplementedException();
+
+                    string token = e.Context.Request.Headers["Authorization"]?.Replace("Bearer ", "") ?? "";
+
+                    if (string.IsNullOrWhiteSpace(token))
+                    {
+                        Console.WriteLine($"[{nameof(VersionHandler)}] No token provided.");
+                        throw new ArgumentException("No token provided.");
+                    }
+
+                    Session.VerifySession(token);
+                    
                 }
-
-                Session.VerifySession(token);
-
-
+                catch (Exception ex)
+                {
+                    e.Respond(HttpStatusCode.InternalServerError,
+                        new JsonObject() { ["success"] = false, ["reason"] = ex.Message });
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(
+                        $"[{nameof(VersionHandler)}] Exception getting media. {e.Method} {e.Path}: {ex.Message}");
+                    e.Responded = true;
+                }
+                
             }
             else if(e.Path == $"{RoutePrefix}" && e.Method == HttpMethod.Post)
             {
                 try
                 {
-                    if (e.Content == null)
-                    {
-                        Console.WriteLine($"[{nameof(VersionHandler)}] No content provided.");
-                        throw new ArgumentException("No Media Content provided.");
-                    }
-
                     string title = e.Content["title"]?.GetValue<string>() ?? "";
                     string description = e.Content["description"]?.GetValue<string>() ?? "";
                     string mediaType = e.Content["mediaType"]?.GetValue<string>() ?? "";
@@ -78,6 +87,68 @@ namespace MediaReview.Handlers
                     e.Respond(HttpStatusCode.InternalServerError, new JsonObject { ["success"] = false, ["reason"] = ex.Message });
                     e.Responded = true;
                 }
+            }else if (Regex.Match(e.Path, @"^/api/media/(?<id>[^/]+)$").Success && e.Method == HttpMethod.Get)
+            {
+                try
+                {
+                    var match = Regex.Match(e.Path, @"^/api/media/(?<id>[^/]+)$");
+                    int mediaId = int.Parse(match.Groups["id"].Value);
+                    
+                    string token = e.Context.Request.Headers["Authorization"]?.Replace("Bearer ", "") ?? "";
+                    
+                    if (string.IsNullOrWhiteSpace(token))
+                    {
+                        Console.WriteLine($"[{nameof(VersionHandler)}] No token provided.");
+                        throw new ArgumentException("No token provided.");
+                    }
+
+                    Session.VerifySession(token);
+
+                    Session session = Session.Get(token);
+                    
+                    Media media = Media.GetMedia(mediaId, session);
+                    
+                    if (media == null)
+                    {
+                        e.Respond(HttpStatusCode.NotFound, new JsonObject
+                        {
+                            ["success"] = false,
+                            ["reason"] = "Media not found"
+                        });
+                        e.Responded = true;
+                        return;
+                    }
+                    
+                    e.Respond(HttpStatusCode.OK, new JsonObject
+                    {
+                        ["success"] = true,
+                        ["content"] = new JsonObject
+                        {
+                            ["id"] = media.id,
+                            ["title"] = media.title,
+                            ["description"] = media.description,
+                            ["genres"] = new JsonArray(media.genres?.Select(g => JsonValue.Create(g)).ToArray() ?? Array.Empty<JsonNode>()),
+                            ["mediaType"] = media.mediaType,
+                            ["releaseYear"] = media.releaseYear,
+                            ["ageRestriction"] = media.ageRestriction
+                        }
+                    });
+                    
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine($"[{nameof(VersionHandler)}] Get media success.");
+                    e.Responded = true;
+
+                }
+                catch (Exception ex)
+                {
+                    e.Respond(HttpStatusCode.InternalServerError,
+                        new JsonObject() { ["success"] = false, ["reason"] = ex.Message });
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(
+                        $"[{nameof(VersionHandler)}] Exception getting media. {e.Method.ToString()} {e.Path}: {ex.Message}");
+                    e.Responded = true;
+                }
+                
             }
         }
     }
