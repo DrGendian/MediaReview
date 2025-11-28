@@ -99,5 +99,32 @@ public class Database
             return null;
         }
     }
+
+    public bool MediaExists(int mediaId)
+    {
+        lock (_medias)
+        {
+            if (_medias.ContainsKey(mediaId))
+            {
+                return true;
+            }
+            return false;
+        }
+    }
+
+    public void SaveMedia(Media media)
+    {
+        lock (_medias)
+        {
+            if (!_medias.ContainsKey(media.id))
+            {
+                _medias.Add(media.id, media);
+            }
+            else
+            {
+                _medias[media.id] = media;
+            }
+        }
+    }
     #endregion
 }

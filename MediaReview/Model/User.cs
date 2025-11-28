@@ -41,7 +41,7 @@ public class User : Atom, IAtom
     
     public static String GetAll(Session session)
     {
-        //if (!session.Valid && !session.IsAdmin) throw new UnauthorizedAccessException("Admin privileges required.");
+        if (!session.Valid && !session.IsAdmin) throw new UnauthorizedAccessException("Admin privileges required.");
         
         var users = Database.Instance.GetAllUsers();
         
