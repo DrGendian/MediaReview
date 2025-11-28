@@ -2,7 +2,7 @@ namespace MediaReview.Model;
 
 public class Database
 {
-
+    #region Data
     private static Database? _instance;
     private static readonly object _lock = new();
 
@@ -10,6 +10,7 @@ public class Database
     Dictionary<int, Review> _reviews;
     Dictionary<int, Media> _medias;
 
+    #region Constructor
     private Database()
     {
         _users = new Dictionary<string, User>();
@@ -33,6 +34,7 @@ public class Database
         return _users;
     }
 
+    #region User Methods
     public User GetUser(string userName)
     {
         lock (_users)
@@ -83,7 +85,7 @@ public class Database
         }
     }
 
-
+    #region Media Methods
     public Media GetMedia(int mediaId)
     {
         lock (_medias)
