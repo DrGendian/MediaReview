@@ -123,9 +123,13 @@ public class Database
             {
                 _medias.Add(media.id, media);
             }
-            else
+            else if(_medias.ContainsKey(media.id) && _medias[media.id].title == media.title)
             {
                 _medias[media.id] = media;
+            }
+            else
+            {
+                _medias.Add(_medias.Count, media);
             }
         }
     }
