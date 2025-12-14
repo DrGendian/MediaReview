@@ -6,7 +6,7 @@ namespace MediaReview.Server
     {
         private readonly HttpListener _Listener;
 
-        public HttpRestServer(int port = 8080)
+        public HttpRestServer(int port = 12000)
         {
             _Listener = new();
             _Listener.Prefixes.Add($"http://+:{port}/api/");

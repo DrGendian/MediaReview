@@ -5,7 +5,7 @@ namespace MediaReview.Model;
 public class Media : Atom, IAtom
 {
     bool _New;
-    public int id { get; set; }
+    public int id { get; private set; }
     public string title { get; set; }= string.Empty;
     public string description { get; set; }= string.Empty;
     public string mediaType { get; set; }= string.Empty;

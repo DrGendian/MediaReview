@@ -21,7 +21,6 @@ public class User : Atom, IAtom
         _New = true;
     }
 
-
     public static User Get(string userName, Session? session = null)
     {
         

@@ -1,3 +1,5 @@
+using Npgsql;
+
 namespace MediaReview.Model;
 
 public class Database
@@ -15,6 +17,12 @@ public class Database
     #region Constructor
     private Database()
     {
+        var connString = "Host=localhost;Port=5432;Username=admin;Password=admin;Database=admin";
+        
+        using var conn = new NpgsqlConnection(connString);
+        conn.Open();
+        Console.WriteLine("Connected to Database");
+        
         _users = new Dictionary<string, User>();
         _reviews = new Dictionary<int, Review>();
         _medias = new Dictionary<int, Media>();
