@@ -4,7 +4,7 @@ using MediaReview.Server;
 using MediaReview.System;
 using MediaReview.Model;
 using System.Text.RegularExpressions;
-
+/*
 namespace MediaReview.Handlers
 {
     internal class MediaHandler : Handler, IHandler
@@ -253,4 +253,4 @@ namespace MediaReview.Handlers
             }
         }
     }
-}
+}*/

@@ -1,11 +1,12 @@
 using MediaReview.System;
+﻿using MediaReview.Repository;
 
 namespace MediaReview.Model
 {
     public abstract class Atom: IAtom
     {
         protected Session? _EditingSession = null;
-        
+        protected abstract IRepository _GetRepository();
         
         protected void _VerifySession(Session? session = null)
         {
@@ -38,11 +39,23 @@ namespace MediaReview.Model
             _VerifySession(session);
         }
         
-        public abstract void Save();
+        public virtual void Save()
+        {
+            _GetRepository().Save(this);
+            _EndEdit();
+        }
         
-        public abstract void Delete();
+        public virtual void Delete()
+        {
+            _GetRepository().Delete(this);
+            _EndEdit();
+        }
         
-        public abstract void Refresh();
+        public virtual void Refresh()
+        {
+            _GetRepository().Refresh(this);
+            _EndEdit();
+        }
     }
 }
 

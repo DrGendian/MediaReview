@@ -1,135 +1,85 @@
 using MediaReview.System;
 using System.Security.Cryptography;
 using System.Text;
+using MediaReview.Repository;
 
 namespace MediaReview.Model;
 
 public class User : Atom, IAtom
 {
-    public int _userId = 0;
-    private string? _UserName { get; set; }= null;
-
-    private bool _New;
-
-    private string? _PasswordHash { get; set; } = null;
-
-
-
-    public User(Session? session = null)
+    private static UserRepository _Repository = new();
+    
+    protected override IRepository _GetRepository()
+    {
+        return _Repository;
+    }
+    public User(Session? session)
     {
         _EditingSession = session;
-        _New = true;
     }
+    public User(): this(null)
+    {}
+    
+    public int _userId = 0;
+    public string _UserName { get; set; }= null;
+    
+    public string? _PasswordHash { get; set; }
 
-    public static User Get(string userName, Session? session = null)
+    public bool checkPassword(string username, string password)
     {
-        
-        return Database.Instance.GetUser(userName);
-    }
-
-    public static User GetUser(string userName, Session session)
-    {
-        if ((session.Valid) && (session.IsAdmin || session.UserName == userName))
-        {
-            var u = Database.Instance.GetUser(userName);
-            u._New = false;
-            return u;
-        }
-        return null;
+        if(_HashPassword(username, password) == null) return false;
+        return _Repository.checkPassword(username, _HashPassword(username, password));
     }
     
-    public static String GetAll(Session session)
+    internal static string? _HashPassword(string userName, string password)
     {
-        if (!session.Valid && !session.IsAdmin) throw new UnauthorizedAccessException("Admin privileges required.");
-        
-        var users = Database.Instance.GetAllUsers();
-        
-        lock (users)
-        {
-            return string.Join(Environment.NewLine,
-                users.Values.Select(u =>
-                    $"UserName: {u.UserName}, FullName: {u.FullName}, Email: {u.EMail}"
-                ));
-        }
-    }
+        if(string.IsNullOrWhiteSpace(password)) { return null; }
 
-    public static bool Exists(string userName)
-    {
-        return Database.Instance.UserExists(userName);
-    }
-
-    public static User Create(string userName, string password, Session? session = null)
-    {
-        if (Database.Instance.UserExists(userName))
-        {
-            throw new Exception("User already exists");
-        }
-
-        User user = new User(session);
-        user.UserName = userName;
-        user._PasswordHash = _HashPassword(userName, password);
-        return user;
-    }
-
-    public string UserName
-    {
-        get { return _UserName ?? string.Empty; }
-        set 
-        {
-            if(!_New) { throw new InvalidOperationException("User name cannot be changed."); }
-            if(string.IsNullOrWhiteSpace(value)) { throw new ArgumentException("User name must not be empty."); }
-            
-            _UserName = value; 
-        }
-    }
-
-    internal static string _HashPassword(string userName, string password)
-    {
         StringBuilder rval = new();
-        foreach(byte i in SHA512.HashData(Encoding.UTF8.GetBytes(userName + password)))
+        foreach(byte i in SHA256.HashData(Encoding.UTF8.GetBytes(userName + password)))
         {
             rval.Append(i.ToString("x2"));
         }
         return rval.ToString();
     }
-
-    public bool checkPassword(string username, string password)
+    public void SetPassword(string password)
     {
-        return ((_HashPassword(username, password)) == _PasswordHash);
+        _PasswordHash = _HashPassword(_UserName, password);
     }
 
+    public static bool Exists(string username)
+    {
+        return _Repository.Exists(username);
+    }
+    
     public string FullName
     {
         get; set;
     } = string.Empty;
-
-
     public string EMail
     {
         get; set;
     } = string.Empty;
 
-
-    public void SetPassword(string password)
+    public static User Get(string username)
     {
-        _EnsureAdminOrOwner(UserName);
-        _PasswordHash = _HashPassword(UserName, password);
+        var user = _Repository.Get(username);
+        Console.WriteLine(user);
+        if(user == null) return null;
+        return user;
     }
 
+    public bool isAdmin { get; set; } = false;
     public override void Save()
     {
-        if(!_New) { _EnsureAdminOrOwner(UserName); }
-        Database.Instance.SaveUser(this);
-        _EndEdit();
+        if(isAdmin) { _EnsureAdmin(); }
+        base.Save();
     }
 
     public override void Delete()
     {
-        _EnsureAdminOrOwner(UserName);
-
-        Database.Instance.DeleteUser(UserName);
-        
-        _EndEdit();
+        _EnsureAdminOrOwner(_UserName);
+        base.Delete();
     }
 
     public override void Refresh()

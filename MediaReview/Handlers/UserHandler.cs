@@ -27,7 +27,9 @@ public class UserHandler: Handler, IHandler
                     return;
                 }
                 
-                User user = User.Create(username, password);
+                User user = new User();
+                user._UserName = username;
+                user.SetPassword(password);
                 user.Save();
                     
                 e.Respond(HttpStatusCode.Created, new JsonObject { ["success"] = true, ["description"] = "User registered." });
@@ -40,7 +42,7 @@ public class UserHandler: Handler, IHandler
                 e.Respond(HttpStatusCode.InternalServerError, new JsonObject { ["success"] = false, ["reason"] = ex.Message });
                 e.Responded = true;
             }
-        }else if (e.Path == $"{RoutePrefix}/users" && e.Method == HttpMethod.Get)
+        }/*else if (e.Path == $"{RoutePrefix}/users" && e.Method == HttpMethod.Get)
         {
             try
             {
@@ -80,7 +82,7 @@ public class UserHandler: Handler, IHandler
                 e.Responded = true;
             }
             
-        }else if ((Regex.Match(e.Path, @"^/api/users/(?<id>[^/]+)/profile$")).Success && e.Method == HttpMethod.Get)
+        }*/else if ((Regex.Match(e.Path, @"^/api/users/(?<id>[^/]+)/profile$")).Success && e.Method == HttpMethod.Get)
         {
             try
             {
@@ -105,7 +107,7 @@ public class UserHandler: Handler, IHandler
                     return;
                 }
             
-                User user = User.GetUser(userId, session);
+                User user = User.Get(userId);
 
                 if (user == null)
                 {
@@ -121,7 +123,7 @@ public class UserHandler: Handler, IHandler
                     ["content"] = new JsonObject
                     {
                         ["id"] = user._userId,
-                        ["username"] = user.UserName,
+                        ["username"] = user._UserName,
                         ["fullname"] = user.FullName,
                         ["email"] = user.EMail
                     }
@@ -162,7 +164,7 @@ public class UserHandler: Handler, IHandler
                     return;
                 }
             
-                User user = User.GetUser(userId, session);
+                User user = User.Get(userId);
 
                 if (user == null)
                 {
@@ -208,7 +210,7 @@ public class UserHandler: Handler, IHandler
                     return;
                 }
                 
-                User user = User.GetUser(userId, session);
+                User user = User.Get(userId);
                 user.BeginEdit(session);
                 user.Delete();
                 e.Respond(HttpStatusCode.OK, new JsonObject() { ["success"] = true});

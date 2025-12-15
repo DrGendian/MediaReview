@@ -1,7 +1,7 @@
 using MediaReview.System;
 
 namespace MediaReview.Model;
-
+/*
 public class Review : Atom, IAtom
 {
     protected Session? _EditingSession = null;
@@ -66,4 +66,4 @@ public class Review : Atom, IAtom
     {
         
     }
-}
+}*/

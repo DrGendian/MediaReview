@@ -1,7 +1,7 @@
 using MediaReview.System;
 
 namespace MediaReview.Model;
-
+/*
 public class Media : Atom, IAtom
 {
     bool _New;
@@ -60,4 +60,4 @@ public class Media : Atom, IAtom
     {
         
     }
-}
+}*/

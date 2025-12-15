@@ -50,7 +50,6 @@ public sealed class Session
     {
         var user = User.Get(userName);
         if (user == null) return null;
-
         if (!(user.checkPassword(userName, password))) return null;
 
         var session = new Session(userName, password);

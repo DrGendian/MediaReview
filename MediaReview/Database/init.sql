@@ -7,6 +7,9 @@ CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(100) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
+    name varchar(100),
+    email varchar(384),
+    hadmin bool,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
