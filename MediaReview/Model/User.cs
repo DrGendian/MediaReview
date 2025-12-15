@@ -66,7 +66,7 @@ public class User : Atom, IAtom
         var user = _Repository.Get(username);
         Console.WriteLine(user);
         if(user == null) return null;
-        return user;
+        return ((User)user);
     }
 
     public bool isAdmin { get; set; } = false;

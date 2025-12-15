@@ -4,7 +4,7 @@ using MediaReview.Server;
 using MediaReview.System;
 using MediaReview.Model;
 using System.Text.RegularExpressions;
-/*
+
 namespace MediaReview.Handlers
 {
     internal class MediaHandler : Handler, IHandler
@@ -73,7 +73,11 @@ namespace MediaReview.Handlers
                     media.description = description;
                     media.genres = genres;
                     media.ageRestriction = ageRestriction;
-                    media.mediaType = mediaType;
+                    if (!Enum.TryParse<Media.MediaType>(mediaType, true, out var parsedMediaType))
+                    {
+                        throw new ArgumentException($"Invalid mediaType: {mediaType}");
+                    }
+                    media.mediaType = parsedMediaType;
                     media.releaseYear = releaseYear;
                     media.Save();
                     
@@ -128,7 +132,7 @@ namespace MediaReview.Handlers
                             ["title"] = media.title,
                             ["description"] = media.description,
                             ["genres"] = new JsonArray(media.genres?.Select(g => JsonValue.Create(g)).ToArray() ?? Array.Empty<JsonNode>()),
-                            ["mediaType"] = media.mediaType,
+                            ["mediaType"] = ((Media.MediaType)media.mediaType).ToString(),
                             ["releaseYear"] = media.releaseYear,
                             ["ageRestriction"] = media.ageRestriction
                         }
@@ -195,7 +199,15 @@ namespace MediaReview.Handlers
                     if(!string.IsNullOrWhiteSpace(description)) media.description = description;
                     if(genres != Array.Empty<string>()) media.genres = genres;
                     if(ageRestriction != 0) media.ageRestriction = ageRestriction;
-                    if(!string.IsNullOrWhiteSpace(mediaType)) media.mediaType = mediaType;
+                    if(!string.IsNullOrWhiteSpace(mediaType))
+                    {
+                        if (!Enum.TryParse<Media.MediaType>(mediaType, true, out var parsedMediaType))
+                        {
+                            throw new ArgumentException($"Invalid mediaType: {mediaType}");
+                        }
+
+                        media.mediaType = parsedMediaType;
+                    }
                     if(releaseYear != 0) media.releaseYear = releaseYear;
                     media.Save();
                     
@@ -253,4 +265,4 @@ namespace MediaReview.Handlers
             }
         }
     }
-}*/
+}

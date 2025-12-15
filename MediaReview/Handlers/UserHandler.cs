@@ -42,10 +42,13 @@ public class UserHandler: Handler, IHandler
                 e.Respond(HttpStatusCode.InternalServerError, new JsonObject { ["success"] = false, ["reason"] = ex.Message });
                 e.Responded = true;
             }
-        }/*else if (e.Path == $"{RoutePrefix}/users" && e.Method == HttpMethod.Get)
+        }else if (e.Path == $"{RoutePrefix}/users" && e.Method == HttpMethod.Get)
         {
             try
             {
+                throw new NotImplementedException();
+                
+                /*
                 string token = e.Context.Request.Headers["Authorization"]?.Replace("Bearer ", "") ?? "";
                     
                 if (string.IsNullOrWhiteSpace(token))
@@ -73,7 +76,7 @@ public class UserHandler: Handler, IHandler
                 e.Respond(HttpStatusCode.OK, new JsonObject { ["success"] = true, ["content"] = userList });
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine($"[{nameof(VersionHandler)}] User list success.");
-                e.Responded = true;
+                e.Responded = true;*/
                 
             }
             catch (Exception ex)
@@ -82,7 +85,7 @@ public class UserHandler: Handler, IHandler
                 e.Responded = true;
             }
             
-        }*/else if ((Regex.Match(e.Path, @"^/api/users/(?<id>[^/]+)/profile$")).Success && e.Method == HttpMethod.Get)
+        }else if ((Regex.Match(e.Path, @"^/api/users/(?<id>[^/]+)/profile$")).Success && e.Method == HttpMethod.Get)
         {
             try
             {

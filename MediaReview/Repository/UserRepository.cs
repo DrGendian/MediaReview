@@ -8,7 +8,7 @@ namespace MediaReview.Repository;
 
 public class UserRepository: RepositoryBase, IRepository
 {
-    public User? Get(object id, Session? session = null)
+    public object? Get(object id, Session? session = null)
     {
         Console.WriteLine("Getting user " + id);
         var sql = "SELECT * FROM Users WHERE username = @username";

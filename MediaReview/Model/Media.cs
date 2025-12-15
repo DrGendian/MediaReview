@@ -1,18 +1,31 @@
+using MediaReview.Repository;
 using MediaReview.System;
 
 namespace MediaReview.Model;
-/*
+
 public class Media : Atom, IAtom
 {
+    public enum MediaType
+    {
+       Movie = 1,
+       Series,
+       Game,
+    }
+    private static MediaRepository _Repository = new();
+    
+    protected override IRepository _GetRepository()
+    {
+        return _Repository;
+    }
+    
     bool _New;
     public int id { get; private set; }
     public string title { get; set; }= string.Empty;
     public string description { get; set; }= string.Empty;
-    public string mediaType { get; set; }= string.Empty;
+    public MediaType mediaType { get; set; }
     public int releaseYear { get; set; }= 0;
     public string[] genres { get; set; }= null;
     public int ageRestriction { get; set; }= 0;
-    //int ownerId = 0;
     public string ownerName { get; set; } = string.Empty;
 
     public Media(Session? session = null)
@@ -30,7 +43,7 @@ public class Media : Atom, IAtom
     {
         if (session.Valid)
         {
-            Media? media = Database.Instance.GetMedia(id);
+            Media? media = (Media)_Repository.Get(id);
             if (media == null) return null;
             media._New = false;
             return media;
@@ -38,26 +51,26 @@ public class Media : Atom, IAtom
         return null;
     }
     
-    public static bool Exists(int id)
+    public static bool Exists(string id)
     {
-        return Database.Instance.MediaExists(id);
+        return _Repository.Exists(id);
     }
 
     public override void Save()
     {
-        if(!_New) { _EnsureAdminOrOwner(ownerName); }
-        Database.Instance.SaveMedia(this);
+        _EnsureAdminOrOwner(ownerName);
+        base.Save();
         _EndEdit();
     }
 
     public override void Delete()
     {
         _EnsureAdminOrOwner(ownerName);
-        Database.Instance.DeleteMedia(id);
+        base.Delete();
     }
 
     public override void Refresh()
     {
         
     }
-}*/
+}
