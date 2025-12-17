@@ -10,7 +10,6 @@ CREATE TABLE users (
     name varchar(100),
     email varchar(384),
     hadmin bool,
-    token 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
