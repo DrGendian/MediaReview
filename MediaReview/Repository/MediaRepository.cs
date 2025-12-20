@@ -10,7 +10,59 @@ public class MediaRepository: RepositoryBase, IRepository
 {
     public object? Get(object id, Session? session = null)
     {
-        return session is null;
+        if (!Exists((int)id))
+        {
+            throw new KeyNotFoundException("Media not found");
+        }
+        var sql = @"
+                SELECT
+            me.id,
+            me.title,
+            me.description,
+            me.media_type,
+            me.release_year,
+            me.age_restriction,
+            me.avg_score,
+            g.id   AS genre_id,
+            g.name AS genre_name,
+            u.username AS username
+        FROM media_entry me
+        JOIN media_genre mg ON me.id = mg.media_id
+        JOIN genre g       ON g.id = mg.genre_id
+        JOIN users u ON u.id = me.creator_id
+        WHERE me.id = @id;
+    ";
+
+        using var cmd = new NpgsqlCommand(sql, (NpgsqlConnection)_Cn);
+        cmd.Parameters.AddWithValue("id", id);
+
+        using var reader = cmd.ExecuteReader();
+
+        Media? media = null;
+
+        while (reader.Read())
+        {
+            if (media == null)
+            {
+                media = new Media
+                {
+                    id = reader.GetInt32(reader.GetOrdinal("id")),
+                    ownerName = reader.GetString(reader.GetOrdinal("username")),
+                    title = reader.GetString(reader.GetOrdinal("title")),
+                    description = reader.GetString(reader.GetOrdinal("description")),
+                    releaseYear = reader.GetInt32(reader.GetOrdinal("release_year")),
+                    ageRestriction = reader.GetInt32(reader.GetOrdinal("age_restriction")),
+                    mediaType = (Media.MediaType)reader.GetInt32(reader.GetOrdinal("media_type")),
+                    avg_score = reader.GetDouble(reader.GetOrdinal("avg_score"))
+                };
+            }
+
+            media.genres.Add(
+                reader.GetString(reader.GetOrdinal("genre_name"))
+            );
+        }
+
+        return media;
     }
 
     public IEnumerable GetAll(Session? session = null)
@@ -23,6 +75,19 @@ public class MediaRepository: RepositoryBase, IRepository
         var sql = "SELECT * FROM media_entry WHERE title = @title";
         using var cmd = new NpgsqlCommand(sql, (NpgsqlConnection)_Cn);
         cmd.Parameters.AddWithValue("@title", title);
+        using var re = cmd.ExecuteReader();
+        if (re.Read())
+        {
+            return true;
+        }
+        return false;
+    }
+    
+    public bool Exists(int id)
+    {
+        var sql = "SELECT * FROM media_entry WHERE id = @id";
+        using var cmd = new NpgsqlCommand(sql, (NpgsqlConnection)_Cn);
+        cmd.Parameters.AddWithValue("@id", id);
         using var re = cmd.ExecuteReader();
         if (re.Read())
         {
@@ -92,10 +157,8 @@ public class MediaRepository: RepositoryBase, IRepository
             cmd.Parameters.AddWithValue("@release_year", ((Media)obj).releaseYear);
             cmd.Parameters.AddWithValue("@age_restriction", ((Media)obj).ageRestriction);
             
-            Console.WriteLine("EXECUTING COMMAND");
             int mediaId = (int)cmd.ExecuteScalar();
-            Console.WriteLine("THE MEDIA ID IS " + mediaId);
-            var genres = ((Media)obj).genres ?? Array.Empty<string>();
+            var genres = ((Media)obj).genres;
             foreach (var genreName in genres)
             {
                 if (string.IsNullOrWhiteSpace(genreName))
@@ -113,12 +176,48 @@ public class MediaRepository: RepositoryBase, IRepository
         }
         else
         {
+            var sql = "UPDATE media_entry SET " +
+                      "title = @title, " +
+                      "description = @description, " +
+                      "media_type = @media_type, " +
+                      "release_year = @release_year, " +
+                      "age_restriction = @age_restriction " +
+                      "WHERE title = @title RETURNING id";
+            using var cmd = new NpgsqlCommand(sql, (NpgsqlConnection)_Cn);
+            cmd.Parameters.AddWithValue("@title", ((Media)obj).title);
+            cmd.Parameters.AddWithValue("@description", ((Media)obj).description);
+            cmd.Parameters.AddWithValue("@media_type", (int)((Media)obj).mediaType);
+            cmd.Parameters.AddWithValue("@release_year", ((Media)obj).releaseYear);
+            cmd.Parameters.AddWithValue("@age_restriction", ((Media)obj).ageRestriction);
             
+            cmd.ExecuteScalar();
         }
+        
     }
 
     public void Delete(object obj)
+    { 
+        var sql = "DELETE FROM media_entry WHERE id = @id";
+        using var cmd = new NpgsqlCommand(sql, (NpgsqlConnection)_Cn);
+        cmd.Parameters.AddWithValue("@id", ((Media)obj).id);
+        cmd.ExecuteNonQuery();
+    }
+
+    public void Favorite(int id, int userId)
     {
-        
+        var sql = "INSERT INTO favorite (user_id, media_id) VALUES (@user_id, @media_id)";
+        using var cmd = new NpgsqlCommand(sql, (NpgsqlConnection)_Cn);
+        cmd.Parameters.AddWithValue("@user_id", userId);
+        cmd.Parameters.AddWithValue("@media_id", id);
+        cmd.ExecuteNonQuery();
+    }
+    
+    public void DeleteFavorite(int id, int userId)
+    {
+        var sql = "DELETE FROM favorite WHERE user_id = @user_id AND media_id = @media_id";
+        using var cmd = new NpgsqlCommand(sql, (NpgsqlConnection)_Cn);
+        cmd.Parameters.AddWithValue("@user_id", userId);
+        cmd.Parameters.AddWithValue("@media_id", id);
+        cmd.ExecuteNonQuery();
     }
 }
