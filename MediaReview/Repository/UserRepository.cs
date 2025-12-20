@@ -10,7 +10,6 @@ public class UserRepository: RepositoryBase, IRepository
 {
     public object? Get(object id, Session? session = null)
     {
-        Console.WriteLine("Getting user " + id);
         var sql = "SELECT * FROM Users WHERE username = @username";
         using var cmd = new NpgsqlCommand(sql, (NpgsqlConnection)_Cn);
         cmd.Parameters.AddWithValue("username", id);
@@ -118,5 +117,21 @@ public class UserRepository: RepositoryBase, IRepository
     public void Delete(object obj)
     {
         
+    }
+
+    public List<string> GetFavorites(int userId)
+    {
+        var sql = "SELECT user_id, me.title FROM favorite JOIN media_entry me ON media_id = me.id WHERE user_id = @userId";
+        using var cmd = new NpgsqlCommand(sql, (NpgsqlConnection)_Cn);
+        cmd.Parameters.AddWithValue("@userId", userId);
+        using var re = cmd.ExecuteReader();
+
+        List<string> favorites = new();
+        while (re.Read())
+        {
+            favorites.Add(re.GetString("title"));
+        }
+        
+        return favorites;
     }
 }

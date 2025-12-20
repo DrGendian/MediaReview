@@ -64,9 +64,13 @@ public class User : Atom, IAtom
     public static User Get(string username)
     {
         var user = _Repository.Get(username);
-        Console.WriteLine(user);
         if(user == null) return null;
         return ((User)user);
+    }
+
+    public static List<string> GetFavorites(int id)
+    {
+        return _Repository.GetFavorites(id);
     }
 
     public bool isAdmin { get; set; } = false;
