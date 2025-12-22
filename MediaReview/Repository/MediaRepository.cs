@@ -65,6 +65,19 @@ public class MediaRepository: RepositoryBase, IRepository
         return media;
     }
 
+    public object? GetFilter(string? title, Media.MediaType? mediaType, string? genreName, int? releaseYear, int? ageRestriction, int? rating, string? sortBy)
+    {
+        
+
+        return new Media();
+    }
+
+    public List<Media> GetAll(string filterTitle, string filterGenre, string filterMediaType, string filterReleaseYear, string filterAgeRestriction, string  filterRating, string sortBy)
+    {
+        var  sql = "SELECT * FROM media_entry";
+        return new List<Media>();
+    }
+
     public IEnumerable GetAll(Session? session = null)
     {
         return null;

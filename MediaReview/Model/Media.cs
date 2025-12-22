@@ -48,6 +48,14 @@ public class Media : Atom, IAtom
         return null;
     }
 
+    public static Media? GetMediaFilter(string? title, Media.MediaType? mediaType, string? genreName, int? releaseYear, int? ageRestriction, int? rating, string? sortBy)
+    {
+
+        return new Media();
+    }
+    
+    
+
     public static void Favorite(int id, Session session)
     {
         if(!_Repository.Exists(id)) throw new KeyNotFoundException("Media not found");

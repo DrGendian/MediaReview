@@ -4,6 +4,7 @@ using MediaReview.Server;
 using MediaReview.System;
 using MediaReview.Model;
 using System.Text.RegularExpressions;
+using System.Web;
 
 namespace MediaReview.Handlers
 {
@@ -15,10 +16,18 @@ namespace MediaReview.Handlers
         {
             if (e.Path == $"{RoutePrefix}" && e.Method == HttpMethod.Get)
             {
+                /*
                 try
                 {
-                    throw new NotImplementedException();
-
+                    
+                    string filterTitle = e.Context.Request.QueryString["title"];
+                    string filterGenre = e.Context.Request.QueryString["genre"];
+                    string filterMediaType = e.Context.Request.QueryString["mediaType"];
+                    int filterReleaseYear = (int)e.Context.Request.QueryString["releaseYear"];
+                    int filterageRestriction = (int)e.Context.Request.QueryString["ageRestriction"];
+                    int filterRating = (int)e.Context.Request.QueryString["rating"];
+                    string sortBy = e.Context.Request.QueryString["sortBy"];
+                    
                     string token = e.Context.Request.Headers["Authorization"]?.Replace("Bearer ", "") ?? "";
 
                     if (string.IsNullOrWhiteSpace(token))
@@ -27,8 +36,12 @@ namespace MediaReview.Handlers
                         throw new ArgumentException("No token provided.");
                     }
 
+                    if (!Enum.TryParse<Media.MediaType>(filterMediaType, true, out var parsedMediaType))
+                    {
+                        throw new ArgumentException($"Invalid mediaType: {filterMediaType}");
+                    }
                     Session.VerifySession(token);
-                    
+                    Media.GetMediaFilter(filterTitle, parsedMediaType, filterGenre, filterReleaseYear, filterageRestriction, filterRating, sortBy);
                 }
                 catch (Exception ex)
                 {
@@ -39,7 +52,7 @@ namespace MediaReview.Handlers
                         $"[{nameof(VersionHandler)}] Exception getting media. {e.Method} {e.Path}: {ex.Message}");
                     e.Responded = true;
                 }
-                
+                */
             }
             else if(e.Path == $"{RoutePrefix}" && e.Method == HttpMethod.Post)
             {
