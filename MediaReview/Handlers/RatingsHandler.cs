@@ -33,11 +33,11 @@ public class RatingsHandler: Handler, IHandler
                 Session session = Session.Get(token);
                 
                 int stars = e.Content["stars"]?.GetValue<int>() ?? -1;
-                string? comment = e.Content["comment"]?.GetValue<string>() ?? null;
+                string comment = e.Content["comment"]?.GetValue<string>() ?? "";
 
-                if (stars == -1 || comment == null)
+                if (stars == -1)
                 {
-                    throw new ArgumentException("No comment or stars provided.");
+                    throw new ArgumentException("No stars provided.");
                 }
                 
                 Rating rating = new Rating(stars, comment, session.UserId, mediaId);
