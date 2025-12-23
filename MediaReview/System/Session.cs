@@ -62,7 +62,7 @@ public sealed class Session
         return session;
     }
 
-    public static Session? Get(string token)
+    public static Session Get(string token)
     {
         Session? rval = null;
         _Cleanup();
@@ -73,6 +73,10 @@ public sealed class Session
             {
                 rval = _Sessions[token];
                 rval.Timestamp = DateTime.UtcNow;
+            }
+            else
+            {
+                throw new UnauthorizedAccessException("Invalid or expired session.");
             }
         }
         

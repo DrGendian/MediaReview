@@ -34,6 +34,15 @@ namespace MediaReview.Model
             }
         }
         
+        protected void _EnsureAdminOrOwner(int userId)
+        {
+            _VerifySession();
+            if(!(_EditingSession!.IsAdmin || (_EditingSession.UserId == userId)))
+            {
+                throw new UnauthorizedAccessException("Admin or owner privileges required.");
+            }
+        }
+        
         public virtual void BeginEdit(Session session)
         {
             _VerifySession(session);

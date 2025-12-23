@@ -1,4 +1,5 @@
 using MediaReview.Repository;
+using MediaReview.System;
 
 namespace MediaReview.Model;
 
@@ -6,11 +7,33 @@ public class Rating: Atom, IAtom
 {
     private static RatingRepository _Repository = new();
     
-    public int stars {get;}
+    public int stars {get; set; }
     public string comment {get; set;}
-    private bool comment_confirmed;
-    public int user_id { get; }
-    public int media_id { get; }
+    public bool comment_confirmed { get; set; }
+    public int user_id { get; set; }
+    public int media_id { get; set; }
+
+    public Rating()
+    {
+        stars = 0;
+        comment = "";
+        comment_confirmed = false;
+    }
+
+    public static Rating Get(int media_id, Session session)
+    {
+        Rating r = (Rating)_Repository.Get(media_id, session);
+        if (r == null)
+        {
+            throw new Exception("Rating not found");
+        }
+        return r;
+    }
+    
+    public virtual void BeginEdit(Session session)
+    {
+        _VerifySession(session); 
+    }
 
     public Rating(int stars, string comment, int user_id, int media_id)
     {
@@ -26,6 +49,8 @@ public class Rating: Atom, IAtom
 
     public void Save()
     {
+        Console.WriteLine(user_id);
+        _EnsureAdminOrOwner(user_id);
         base.Save();
     }
 }
