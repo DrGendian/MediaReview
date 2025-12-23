@@ -134,4 +134,22 @@ public class UserRepository: RepositoryBase, IRepository
         
         return favorites;
     }
+
+    public List<Rating> GetRatings(int userId)
+    {
+        List<Rating> ratingList = new List<Rating>();
+        var sql = "SELECT * FROM rating WHERE user_id = @userId";
+        using var cmd = new NpgsqlCommand(sql, (NpgsqlConnection)_Cn);
+        cmd.Parameters.AddWithValue("@userId", userId);
+        using var re = cmd.ExecuteReader();
+        while (re.Read())
+        {
+            int stars= re.GetInt32("stars");
+            string comment = re.GetString("comment");
+            int mediaId = re.GetInt32("media_id");
+            ratingList.Add(new Rating(stars, comment, userId, mediaId));
+        }
+        Console.WriteLine(ratingList.Count);
+        return ratingList;
+    }
 }

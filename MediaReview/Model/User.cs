@@ -73,6 +73,11 @@ public class User : Atom, IAtom
         return _Repository.GetFavorites(id);
     }
 
+    public static List<Rating> GetRatings(int id)
+    {
+        return _Repository.GetRatings(id);
+    }
+
     public bool isAdmin { get; set; } = false;
     public override void Save()
     {
