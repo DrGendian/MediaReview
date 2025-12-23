@@ -65,7 +65,7 @@ public class RatingRepository: RepositoryBase, IRepository
             cmd.Parameters.AddWithValue("@comment", r.comment);
             cmd.ExecuteNonQuery();
 
-            sql = "UPDATE media_entry me SET avg_score = r.avg_score FROM (SELECT media_id, AVG(stars) AS avg_score FROM rating GROUP BY media_id) r WHERE me.id = @media_id";
+            sql = "UPDATE media_entry me SET avg_score = r.avg_score FROM (SELECT media_id, AVG(stars) AS avg_score FROM rating WHERE media_id = @media_id  GROUP BY media_id) r WHERE me.id = @media_id";
             using var rcmd = new NpgsqlCommand(sql, (NpgsqlConnection)_Cn);
             rcmd.Parameters.AddWithValue("@media_id", r.media_id);
             rcmd.ExecuteNonQuery();
@@ -81,7 +81,7 @@ public class RatingRepository: RepositoryBase, IRepository
             cmd.Parameters.AddWithValue("@confirm", r.comment_confirmed);
             cmd.ExecuteNonQuery();
         
-            sql = "UPDATE media_entry me SET avg_score = r.avg_score FROM (SELECT media_id, AVG(stars) AS avg_score FROM rating GROUP BY media_id) r WHERE me.id = @media_id";
+            sql = "UPDATE media_entry me SET avg_score = r.avg_score FROM (SELECT media_id, AVG(stars) AS avg_score FROM rating WHERE media_id = @media_id GROUP BY media_id) r WHERE me.id = @media_id";
             using var rcmd = new NpgsqlCommand(sql, (NpgsqlConnection)_Cn);
             rcmd.Parameters.AddWithValue("@media_id", r.media_id);
             rcmd.ExecuteNonQuery();

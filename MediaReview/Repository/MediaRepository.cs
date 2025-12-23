@@ -115,23 +115,17 @@ public class MediaRepository: RepositoryBase, IRepository
     }
     private int GetOrCreateGenreId(string genreName, NpgsqlConnection conn)
     {
-        using (var cmd = new NpgsqlCommand(
-                   "SELECT id FROM genre WHERE name = @name", conn))
-        {
-            cmd.Parameters.AddWithValue("@name", genreName);
-            var result = cmd.ExecuteScalar();
-            Console.WriteLine("Select genre" + result);
-            if (result != null)
-                return (int)result;
-        }
-        
-        using (var cmd = new NpgsqlCommand(
-                   "INSERT INTO genre (name) VALUES (@name) RETURNING id", conn))
-        {
-            cmd.Parameters.AddWithValue("@name", genreName);
-            Console.WriteLine("Create genre" + (int)cmd.ExecuteScalar());
-            return (int)cmd.ExecuteScalar();
-        }
+        using var cmd = new NpgsqlCommand(
+            """
+            INSERT INTO genre (name)
+            VALUES (@name)
+            ON CONFLICT (name)
+            DO UPDATE SET name = EXCLUDED.name
+            RETURNING id;
+            """, conn);
+
+        cmd.Parameters.AddWithValue("@name", genreName);
+        return (int)cmd.ExecuteScalar();
     }
 
     private int GetUserId(string username, NpgsqlConnection conn)

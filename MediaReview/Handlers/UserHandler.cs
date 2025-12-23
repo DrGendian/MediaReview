@@ -285,7 +285,7 @@ public class UserHandler: Handler, IHandler
                 
                 e.Responded = true;
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine($"[{nameof(VersionHandler)}] Media unmarked as favorite.");
+                Console.WriteLine($"[{nameof(VersionHandler)}] Got all Ratings successful.");
             }
             catch (Exception ex)
             {
