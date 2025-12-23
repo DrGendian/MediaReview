@@ -160,6 +160,41 @@ public class RatingsHandler: Handler, IHandler
                     $"[{nameof(VersionHandler)}] Exception updating rating. {e.Method.ToString()} {e.Path}: {ex.Message}");
                 e.Responded = true;
             }
+        }else if (Regex.Match(e.Path, @"^/api/ratings/(?<id>[^/]+)/like$").Success && e.Method == HttpMethod.Post)
+        {
+            try
+            {
+                var match = Regex.Match(e.Path, @"^/api/ratings/(?<id>[^/]+)/like$");
+                int ratingId = int.Parse(match.Groups["id"].Value);
+
+                string token = e.Context.Request.Headers["Authorization"]?.Replace("Bearer ", "") ?? "";
+                if (string.IsNullOrWhiteSpace(token))
+                {
+                    Console.WriteLine($"[{nameof(VersionHandler)}] No token provided.");
+                    throw new ArgumentException("No token provided.");
+                }
+
+                Session.VerifySession(token);
+                Session session = Session.Get(token);
+                
+                Rating.Like(ratingId, session);
+
+                e.Respond(HttpStatusCode.OK,
+                    new JsonObject() { ["success"] = "true" });
+                Console.ForegroundColor = ConsoleColor.Blue;
+                Console.WriteLine($"[{nameof(VersionHandler)}] Handled {e.Method.ToString()} {e.Path}.");
+
+                e.Responded = true;
+            }
+            catch (Exception ex)
+            {
+                e.Respond(HttpStatusCode.InternalServerError,
+                    new JsonObject() { ["success"] = false, ["reason"] = ex.Message });
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(
+                    $"[{nameof(VersionHandler)}] Exception liking rating. {e.Method.ToString()} {e.Path}: {ex.Message}");
+                e.Responded = true;
+            }
         }
     }
 }

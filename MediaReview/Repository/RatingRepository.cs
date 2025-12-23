@@ -88,6 +88,17 @@ public class RatingRepository: RepositoryBase, IRepository
         }
     }
 
+    public void Like(int ratingId, Session session)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+
+        var sql = "INSERT INTO rating_like (user_id, rating_id) VALUES (@user_id, @rating_id)";
+        using var cmd = new NpgsqlCommand(sql, (NpgsqlConnection)_Cn);
+        cmd.Parameters.AddWithValue("@user_id", session.UserId);
+        cmd.Parameters.AddWithValue("@rating_id", ratingId);
+        cmd.ExecuteNonQuery();
+        
+    }
 
     public void Delete(object obj)
     {

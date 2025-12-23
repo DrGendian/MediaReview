@@ -29,6 +29,11 @@ public class Rating: Atom, IAtom
         }
         return r;
     }
+
+    public static void Like(int ratingId, Session session)
+    {
+        _Repository.Like(ratingId, session);
+    }
     
     public virtual void BeginEdit(Session session)
     {
