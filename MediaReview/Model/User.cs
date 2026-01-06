@@ -31,7 +31,7 @@ public class User : Atom, IAtom
         return _Repository.checkPassword(username, _HashPassword(username, password));
     }
     
-    internal static string? _HashPassword(string userName, string password)
+    public static string? _HashPassword(string userName, string password)
     {
         if(string.IsNullOrWhiteSpace(password)) { return null; }
 
