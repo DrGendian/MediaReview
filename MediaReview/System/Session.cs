@@ -2,6 +2,7 @@ using MediaReview.Model;
 
 namespace MediaReview.System;
 
+
 public sealed class Session
 {
     private const string _ALPHABET = "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -27,16 +28,17 @@ public sealed class Session
     
     public int UserId { get; private set; }
     
-    public string UserName { get; }
+    public string UserName { get; private set; }
     
     public DateTime Timestamp { get; private set; }
 
     public bool Valid
     {
         get { return _Sessions.ContainsKey(Token); }
+        private set;
     }
 
-    public bool IsAdmin { get; }
+    public bool IsAdmin { get; private set; }
 
     public static void VerifySession(string token)
     {
@@ -58,6 +60,29 @@ public sealed class Session
         {
             _Sessions[session.Token] = session;
         }
+
+        return session;
+    }
+
+    public static Session CreateTestSession(int userId, string userName, bool isAdmin, bool valid)
+    {
+        Session session = new Session(userName, userId);
+        session.IsAdmin = isAdmin;
+        session.Valid = valid;
+
+        lock (_Sessions)
+        {
+            _Sessions[session.Token] = session;
+        }
+
+        return session;
+    }
+
+    public static Session CreateInvalidSession(int userId, string userName, bool isAdmin, bool valid)
+    {
+        Session session = new Session(userName, userId);
+        session.IsAdmin = isAdmin;
+        session.Valid = valid;
 
         return session;
     }

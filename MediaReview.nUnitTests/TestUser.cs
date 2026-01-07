@@ -2,7 +2,7 @@
 
 namespace MediaReview.nUnitTests
 {
-    public class TestMediaReview
+    public class TestUser
     {
         [SetUp]
         public void Setup()

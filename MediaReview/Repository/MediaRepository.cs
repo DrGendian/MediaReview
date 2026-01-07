@@ -150,10 +150,6 @@ public class MediaRepository: RepositoryBase, IRepository
             {
                 throw new InvalidOperationException("User name must not be empty.");
             }
-            if(string.IsNullOrWhiteSpace(((Media) obj).description))
-            {
-                throw new InvalidOperationException("Password must not be empty.");
-            }
             
             var sql = "INSERT INTO media_entry (creator_id, title, description, media_type, release_year, age_restriction) VALUES (@creator_id, @title, @description, @media_type, @release_year, @age_restriction) RETURNING id";
             using var cmd = new NpgsqlCommand(sql, (NpgsqlConnection)_Cn);
