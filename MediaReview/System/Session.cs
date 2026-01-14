@@ -10,9 +10,10 @@ public sealed class Session
 
     private static readonly Dictionary<string, Session> _Sessions = new();
 
-    private Session(string username, string password)
+    private Session(string username, int id)
     {
        UserName = username;
+       UserId = id;
        IsAdmin = (username == "admin");
        Timestamp = DateTime.UtcNow;
        
@@ -24,7 +25,7 @@ public sealed class Session
     
     public string Token { get; }
     
-    public int UserId { get; }
+    public int UserId { get; private set; }
     
     public string UserName { get; }
     
@@ -52,7 +53,7 @@ public sealed class Session
         if (user == null) return null;
         if (!(user.checkPassword(userName, password))) return null;
 
-        var session = new Session(userName, password);
+        var session = new Session(userName, user._userId);
         lock (_Sessions)
         {
             _Sessions[session.Token] = session;
@@ -61,7 +62,7 @@ public sealed class Session
         return session;
     }
 
-    public static Session? Get(string token)
+    public static Session Get(string token)
     {
         Session? rval = null;
         _Cleanup();
@@ -72,6 +73,10 @@ public sealed class Session
             {
                 rval = _Sessions[token];
                 rval.Timestamp = DateTime.UtcNow;
+            }
+            else
+            {
+                throw new UnauthorizedAccessException("Invalid or expired session.");
             }
         }
         

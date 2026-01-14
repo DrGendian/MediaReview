@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36623.8 d17.14
+VisualStudioVersion = 17.14.36623.8
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MediaReview", "MediaReview\MediaReview.csproj", "{5E99683C-733F-4E0A-9B30-00AA83DE124E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MediaReview.nUnitTests", "MediaReview.nUnitTests\MediaReview.nUnitTests.csproj", "{66B2C33F-63C5-4D31-902E-9B943A66F6F6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{5E99683C-733F-4E0A-9B30-00AA83DE124E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5E99683C-733F-4E0A-9B30-00AA83DE124E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5E99683C-733F-4E0A-9B30-00AA83DE124E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{66B2C33F-63C5-4D31-902E-9B943A66F6F6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{66B2C33F-63C5-4D31-902E-9B943A66F6F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{66B2C33F-63C5-4D31-902E-9B943A66F6F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{66B2C33F-63C5-4D31-902E-9B943A66F6F6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -228,5 +228,70 @@ public class UserHandler: Handler, IHandler
                 e.Responded = true;
             }
         }
+        else if ((Regex.Match(e.Path, @"^/api/users/(?<id>[^/]+)/favorites$")).Success && e.Method == HttpMethod.Get)
+        {
+            try
+            {
+                var match = Regex.Match(e.Path, @"^/api/users/(?<id>[^/]+)/favorites$");
+                int userId = int.Parse(match.Groups["id"].Value);
+                string token = e.Context.Request.Headers["Authorization"]?.Replace("Bearer ", "") ?? "";
+                        
+                if (string.IsNullOrWhiteSpace(token))
+                {
+                    Console.WriteLine($"[{nameof(VersionHandler)}] No token provided.");
+                    throw new ArgumentException("No token provided.");
+                }
+                Session.VerifySession(token);
+
+                List<string> favorites = User.GetFavorites(userId);
+                
+                e.Respond(HttpStatusCode.OK, new JsonObject
+                {
+                    ["success"] = true,
+                    ["favorites"] = new JsonArray(favorites?.Select(f => JsonValue.Create(f)).ToArray() ??  Array.Empty<JsonValue>())
+                });
+                
+                e.Responded = true;
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine($"[{nameof(VersionHandler)}] Media unmarked as favorite.");
+            }
+            catch (Exception ex)
+            {
+                e.Respond(HttpStatusCode.InternalServerError, new JsonObject { ["success"] = false, ["reason"] = ex.Message });
+                e.Responded = true;
+            }
+        }else if ((Regex.Match(e.Path, @"^/api/users/(?<id>[^/]+)/ratings$")).Success && e.Method == HttpMethod.Get)
+        {
+            try
+            {
+                var match = Regex.Match(e.Path, @"^/api/users/(?<id>[^/]+)/ratings$");
+                int userId = int.Parse(match.Groups["id"].Value);
+                string token = e.Context.Request.Headers["Authorization"]?.Replace("Bearer ", "") ?? "";
+                        
+                if (string.IsNullOrWhiteSpace(token))
+                {
+                    Console.WriteLine($"[{nameof(VersionHandler)}] No token provided.");
+                    throw new ArgumentException("No token provided.");
+                }
+                Session.VerifySession(token);
+
+                List<Rating> ratings = User.GetRatings(userId);
+                
+                e.Respond(HttpStatusCode.OK, new JsonObject
+                {
+                    ["success"] = true,
+                    ["ratings"] = new JsonArray(ratings?.Select(r => JsonValue.Create(r)).ToArray() ??  Array.Empty<JsonValue>())
+                });
+                
+                e.Responded = true;
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine($"[{nameof(VersionHandler)}] Got all Ratings successful.");
+            }
+            catch (Exception ex)
+            {
+                e.Respond(HttpStatusCode.InternalServerError, new JsonObject { ["success"] = false, ["reason"] = ex.Message });
+                e.Responded = true;
+            }
+        }
     }
 }

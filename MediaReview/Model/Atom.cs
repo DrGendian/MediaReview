@@ -11,7 +11,7 @@ namespace MediaReview.Model
         protected void _VerifySession(Session? session = null)
         {
             if(session is not null) { _EditingSession = session; }
-            if(_EditingSession is null || !_EditingSession.Valid) { throw new UnauthorizedAccessException("Invalid session."); }
+            if(_EditingSession is null && !_EditingSession.Valid) { throw new UnauthorizedAccessException("Invalid session."); }
         }
         
         protected void _EndEdit()
@@ -29,6 +29,15 @@ namespace MediaReview.Model
         {
             _VerifySession();
             if(!(_EditingSession!.IsAdmin || (_EditingSession.UserName == owner)))
+            {
+                throw new UnauthorizedAccessException("Admin or owner privileges required.");
+            }
+        }
+        
+        protected void _EnsureAdminOrOwner(int userId)
+        {
+            _VerifySession();
+            if(!(_EditingSession!.IsAdmin || (_EditingSession.UserId == userId)))
             {
                 throw new UnauthorizedAccessException("Admin or owner privileges required.");
             }

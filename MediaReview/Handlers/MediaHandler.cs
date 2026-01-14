@@ -4,6 +4,7 @@ using MediaReview.Server;
 using MediaReview.System;
 using MediaReview.Model;
 using System.Text.RegularExpressions;
+using System.Web;
 
 namespace MediaReview.Handlers
 {
@@ -15,10 +16,18 @@ namespace MediaReview.Handlers
         {
             if (e.Path == $"{RoutePrefix}" && e.Method == HttpMethod.Get)
             {
+                /*
                 try
                 {
-                    throw new NotImplementedException();
-
+                    
+                    string filterTitle = e.Context.Request.QueryString["title"];
+                    string filterGenre = e.Context.Request.QueryString["genre"];
+                    string filterMediaType = e.Context.Request.QueryString["mediaType"];
+                    int filterReleaseYear = (int)e.Context.Request.QueryString["releaseYear"];
+                    int filterageRestriction = (int)e.Context.Request.QueryString["ageRestriction"];
+                    int filterRating = (int)e.Context.Request.QueryString["rating"];
+                    string sortBy = e.Context.Request.QueryString["sortBy"];
+                    
                     string token = e.Context.Request.Headers["Authorization"]?.Replace("Bearer ", "") ?? "";
 
                     if (string.IsNullOrWhiteSpace(token))
@@ -27,8 +36,12 @@ namespace MediaReview.Handlers
                         throw new ArgumentException("No token provided.");
                     }
 
+                    if (!Enum.TryParse<Media.MediaType>(filterMediaType, true, out var parsedMediaType))
+                    {
+                        throw new ArgumentException($"Invalid mediaType: {filterMediaType}");
+                    }
                     Session.VerifySession(token);
-                    
+                    Media.GetMediaFilter(filterTitle, parsedMediaType, filterGenre, filterReleaseYear, filterageRestriction, filterRating, sortBy);
                 }
                 catch (Exception ex)
                 {
@@ -39,7 +52,7 @@ namespace MediaReview.Handlers
                         $"[{nameof(VersionHandler)}] Exception getting media. {e.Method} {e.Path}: {ex.Message}");
                     e.Responded = true;
                 }
-                
+                */
             }
             else if(e.Path == $"{RoutePrefix}" && e.Method == HttpMethod.Post)
             {
@@ -71,7 +84,13 @@ namespace MediaReview.Handlers
                     media.ownerName = session.UserName;
                     media.title = title;
                     media.description = description;
-                    media.genres = genres;
+                    if (genres != Array.Empty<string>())
+                    {
+                        foreach (var genre in genres)
+                        {
+                            media.genres.Add(genre);
+                        }
+                    }
                     media.ageRestriction = ageRestriction;
                     if (!Enum.TryParse<Media.MediaType>(mediaType, true, out var parsedMediaType))
                     {
@@ -134,7 +153,8 @@ namespace MediaReview.Handlers
                             ["genres"] = new JsonArray(media.genres?.Select(g => JsonValue.Create(g)).ToArray() ?? Array.Empty<JsonNode>()),
                             ["mediaType"] = ((Media.MediaType)media.mediaType).ToString(),
                             ["releaseYear"] = media.releaseYear,
-                            ["ageRestriction"] = media.ageRestriction
+                            ["ageRestriction"] = media.ageRestriction,
+                            ["avg_score"] =  media.avg_score
                         }
                     });
                     
@@ -197,7 +217,10 @@ namespace MediaReview.Handlers
                     media.BeginEdit(session);
                     if(!string.IsNullOrWhiteSpace(title)) media.title = title;
                     if(!string.IsNullOrWhiteSpace(description)) media.description = description;
-                    if(genres != Array.Empty<string>()) media.genres = genres;
+                    if (genres != Array.Empty<string>())
+                    {
+                        media.genres = new List<string>(genres);
+                    }
                     if(ageRestriction != 0) media.ageRestriction = ageRestriction;
                     if(!string.IsNullOrWhiteSpace(mediaType))
                     {
@@ -260,6 +283,70 @@ namespace MediaReview.Handlers
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine(
                         $"[{nameof(VersionHandler)}] Exception deleting media. {e.Method.ToString()} {e.Path}: {ex.Message}");
+                    e.Responded = true;
+                }
+            }else if (Regex.Match(e.Path, @"^/api/media/(?<id>\d+)/favorite$").Success && e.Method == HttpMethod.Post)
+            {
+                try{
+                    var match = Regex.Match(e.Path, @"^^/api/media/(?<id>\d+)/favorite$");
+                    int mediaId = int.Parse(match.Groups["id"].Value);
+                    string token = e.Context.Request.Headers["Authorization"]?.Replace("Bearer ", "") ?? "";
+                        
+                    if (string.IsNullOrWhiteSpace(token))
+                    {
+                        Console.WriteLine($"[{nameof(VersionHandler)}] No token provided.");
+                        throw new ArgumentException("No token provided.");
+                    }
+                    Session.VerifySession(token);
+
+                    Session session = Session.Get(token);
+
+                    Media.Favorite(mediaId, session);
+                    
+                    e.Respond(HttpStatusCode.OK, new JsonObject { ["success"] = true, ["description"] = "Favorite media saved." });
+                    e.Responded = true;
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine($"[{nameof(VersionHandler)}] Media marked as favorite.");
+                }
+                catch (Exception ex)
+                {
+                    e.Respond(HttpStatusCode.InternalServerError,
+                        new JsonObject() { ["success"] = false, ["reason"] = ex.Message });
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(
+                        $"[{nameof(VersionHandler)}] Exception marking media as favorite. {e.Method.ToString()} {e.Path}: {ex.Message}");
+                    e.Responded = true;
+                }
+            }else if (Regex.Match(e.Path, @"^/api/media/(?<id>\d+)/favorite$").Success && e.Method == HttpMethod.Delete)
+            {
+                try{
+                    var match = Regex.Match(e.Path, @"^^/api/media/(?<id>\d+)/favorite$");
+                    int mediaId = int.Parse(match.Groups["id"].Value);
+                    string token = e.Context.Request.Headers["Authorization"]?.Replace("Bearer ", "") ?? "";
+                        
+                    if (string.IsNullOrWhiteSpace(token))
+                    {
+                        Console.WriteLine($"[{nameof(VersionHandler)}] No token provided.");
+                        throw new ArgumentException("No token provided.");
+                    }
+                    Session.VerifySession(token);
+
+                    Session session = Session.Get(token);
+
+                    Media.DeleteFavorite(mediaId, session);
+                    
+                    e.Respond(HttpStatusCode.OK, new JsonObject { ["success"] = true, ["description"] = "Favorite media deleted." });
+                    e.Responded = true;
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine($"[{nameof(VersionHandler)}] Media unmarked as favorite.");
+                }
+                catch (Exception ex)
+                {
+                    e.Respond(HttpStatusCode.InternalServerError,
+                        new JsonObject() { ["success"] = false, ["reason"] = ex.Message });
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(
+                        $"[{nameof(VersionHandler)}] Exception unmarking media as favorite. {e.Method.ToString()} {e.Path}: {ex.Message}");
                     e.Responded = true;
                 }
             }
