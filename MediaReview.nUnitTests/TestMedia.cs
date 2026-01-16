@@ -14,7 +14,7 @@ namespace MediaReview.nUnitTests
         public void Setup()
         {
             OwnerSession = Session.CreateTestSession(
-                userId: 3,
+                userId: 4,
                 userName: "owner",
                 isAdmin: false,
                 valid: true
@@ -28,7 +28,7 @@ namespace MediaReview.nUnitTests
             );
 
             ForeignSession = Session.CreateTestSession(
-                userId: 4,
+                userId: 5,
                 userName: "other",
                 isAdmin: false,
                 valid: true
@@ -46,10 +46,10 @@ namespace MediaReview.nUnitTests
         public void Save_AsOwner_IsAllowed()
         {
             var media = new Media(OwnerSession)
-            {
-                
+            { 
                 ownerName = "owner",
                 title = "Test",
+                
                 mediaType = Media.MediaType.Movie
             };
 
@@ -64,7 +64,7 @@ namespace MediaReview.nUnitTests
             var media = new Media(AdminSession)
             {
                 ownerName = "owner",
-                title = "Test",
+                title = "Test2",
                 mediaType = Media.MediaType.Movie
             };
 
@@ -119,14 +119,14 @@ namespace MediaReview.nUnitTests
         [Test]
         public void GetMedia_WithValidSession_ReturnsMedia()
         {
-            var media = Media.GetMedia(4, OwnerSession);
+            var media = Media.GetMedia(14, OwnerSession);
             Assert.That(media, Is.Not.Null);
         }
 
         [Test]
         public void GetMedia_WithInvalidSession_ReturnsNull()
         {
-            var media = Media.GetMedia(4, InvalidSession);
+            var media = Media.GetMedia(99, InvalidSession);
             Assert.That(media, Is.Null);
         }
     }

@@ -139,7 +139,7 @@ public class MediaRepository: RepositoryBase, IRepository
                 return (int)result;
         }
 
-        return 0;
+        throw new KeyNotFoundException("User not found");
     }
     
     public void Save(object obj)
