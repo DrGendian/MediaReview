@@ -13,7 +13,7 @@ public abstract class RepositoryBase
         {
             if (_DbConnection == null)
             {
-                var connString = "Host=localhost;Port=5432;Username=postgres;Password=admin;Database=postgres";
+                var connString = "Host=localhost;Port=5432;Username=postgres;Password=postgres;Database=postgres";
                 _DbConnection = new NpgsqlConnection(connString);
                 _DbConnection.Open();
             }

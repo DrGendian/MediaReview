@@ -9,8 +9,7 @@ CREATE TABLE users (
     password_hash VARCHAR(255) NOT NULL,
     name varchar(100),
     email varchar(384),
-    hadmin bool,
-    token 
+    hadmin bool, 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
