@@ -1,8 +1,8 @@
 using System.Collections;
 using System.Data;
+using Npgsql;
 using MediaReview.Model;
 using MediaReview.System;
-using Npgsql;
 
 namespace MediaReview.Repository;
 
@@ -56,10 +56,9 @@ public class MediaRepository: RepositoryBase, IRepository
                     avg_score = reader.GetDouble(reader.GetOrdinal("avg_score"))
                 };
             }
-
-            media.genres.Add(
-                reader.GetString(reader.GetOrdinal("genre_name"))
-            );
+                media.genres.Add(
+                    reader.GetString(reader.GetOrdinal("genre_name"))
+                );
         }
 
         return media;
@@ -113,18 +112,14 @@ public class MediaRepository: RepositoryBase, IRepository
     {
         
     }
-    private int GetOrCreateGenreId(string genreName, NpgsqlConnection conn)
+    private int GetOrCreateGenreId(string genreName, NpgsqlConnection conn, NpgsqlTransaction trans)
     {
         using var cmd = new NpgsqlCommand(
-            """
-            INSERT INTO genre (name)
-            VALUES (@name)
-            ON CONFLICT (name)
-            DO UPDATE SET name = EXCLUDED.name
-            RETURNING id;
-            """, conn);
+            "INSERT INTO genre (name) VALUES (@name) ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id;", conn);
 
+        using var cmd = new NpgsqlCommand(sql, conn, trans);
         cmd.Parameters.AddWithValue("@name", genreName);
+
         return (int)cmd.ExecuteScalar();
     }
 
@@ -142,61 +137,92 @@ public class MediaRepository: RepositoryBase, IRepository
         throw new KeyNotFoundException("User not found");
     }
     
-    public void Save(object obj)
+public void Save(object obj)
+{
+    var media = (Media)obj;
+    var conn = (NpgsqlConnection)_Cn;
+    
+    if (string.IsNullOrWhiteSpace(media.title))
+        throw new InvalidOperationException("Title must not be empty.");
+    if (string.IsNullOrWhiteSpace(media.description))
+        throw new InvalidOperationException("Description must not be empty.");
+    
+    if (conn.State != ConnectionState.Open) conn.Open();
+    
+    using var transaction = conn.BeginTransaction();
+
+    try
     {
-        if (!Exists(((Media)obj).title))
+        int mediaId;
+
+        if (!Exists(media.id))
         {
-            if(string.IsNullOrWhiteSpace(((Media)obj).title))
-            {
-                throw new InvalidOperationException("User name must not be empty.");
-            }
+            var sql = "INSERT INTO media_entry (creator_id, title, description, media_type, release_year, age_restriction) " +
+                      "VALUES (@creator_id, @title, @description, @media_type, @release_year, @age_restriction) RETURNING id";
             
-            var sql = "INSERT INTO media_entry (creator_id, title, description, media_type, release_year, age_restriction) VALUES (@creator_id, @title, @description, @media_type, @release_year, @age_restriction) RETURNING id";
-            using var cmd = new NpgsqlCommand(sql, (NpgsqlConnection)_Cn);
-            cmd.Parameters.AddWithValue("@creator_id", GetUserId(((Media)obj).ownerName,  (NpgsqlConnection)_Cn));
-            cmd.Parameters.AddWithValue("@title", ((Media)obj).title);
-            cmd.Parameters.AddWithValue("@description", ((Media)obj).description);
-            cmd.Parameters.AddWithValue("@media_type", (int)((Media)obj).mediaType);
-            cmd.Parameters.AddWithValue("@release_year", ((Media)obj).releaseYear);
-            cmd.Parameters.AddWithValue("@age_restriction", ((Media)obj).ageRestriction);
+            using var cmd = new NpgsqlCommand(sql, conn, transaction);
+
+            cmd.Parameters.AddWithValue("@creator_id", GetUserId(media.ownerName, conn)); 
+            cmd.Parameters.AddWithValue("@title", media.title);
+            cmd.Parameters.AddWithValue("@description", media.description);
+            cmd.Parameters.AddWithValue("@media_type", (int)media.mediaType);
+            cmd.Parameters.AddWithValue("@release_year", media.releaseYear);
+            cmd.Parameters.AddWithValue("@age_restriction", media.ageRestriction);
             
-            int mediaId = (int)cmd.ExecuteScalar();
-            var genres = ((Media)obj).genres;
-            foreach (var genreName in genres)
-            {
-                if (string.IsNullOrWhiteSpace(genreName))
-                    continue;
-
-                int genreId = GetOrCreateGenreId(genreName, (NpgsqlConnection)_Cn);
-
-                using var gcmd = new NpgsqlCommand("INSERT INTO media_genre (media_id, genre_id) VALUES (@m, @g)", (NpgsqlConnection)_Cn);
-
-                gcmd.Parameters.AddWithValue("@m", mediaId);
-                gcmd.Parameters.AddWithValue("@g", genreId);
-                gcmd.ExecuteNonQuery();
-                Thread.Sleep(100);
-            }
+            mediaId = (int)cmd.ExecuteScalar();
         }
         else
         {
             var sql = "UPDATE media_entry SET " +
-                      "title = @title, " +
                       "description = @description, " +
                       "media_type = @media_type, " +
                       "release_year = @release_year, " +
                       "age_restriction = @age_restriction " +
-                      "WHERE title = @title RETURNING id";
-            using var cmd = new NpgsqlCommand(sql, (NpgsqlConnection)_Cn);
-            cmd.Parameters.AddWithValue("@title", ((Media)obj).title);
-            cmd.Parameters.AddWithValue("@description", ((Media)obj).description);
-            cmd.Parameters.AddWithValue("@media_type", (int)((Media)obj).mediaType);
-            cmd.Parameters.AddWithValue("@release_year", ((Media)obj).releaseYear);
-            cmd.Parameters.AddWithValue("@age_restriction", ((Media)obj).ageRestriction);
+                      "WHERE id = @id RETURNING id";
+
+            using var cmd = new NpgsqlCommand(sql, conn, transaction);
+            cmd.Parameters.AddWithValue("@id", media.id);
+            cmd.Parameters.AddWithValue("@title", media.title);
+            cmd.Parameters.AddWithValue("@description", media.description);
+            cmd.Parameters.AddWithValue("@media_type", (int)media.mediaType);
+            cmd.Parameters.AddWithValue("@release_year", media.releaseYear);
+            cmd.Parameters.AddWithValue("@age_restriction", media.ageRestriction);
             
-            cmd.ExecuteScalar();
+            object result = cmd.ExecuteScalar();
+            if (result == null) throw new Exception("Media not found for update.");
+            mediaId = (int)result;
+            Console.WriteLine(mediaId);
+            
+            var delSql = "DELETE FROM media_genre WHERE media_id = @mid";
+            using var delCmd = new NpgsqlCommand(delSql, conn, transaction);
+            delCmd.Parameters.AddWithValue("@mid", mediaId);
+            
+            delCmd.ExecuteNonQuery();
         }
         
+        if (media.genres != null)
+        {
+            
+            foreach (var genreName in media.genres.Distinct())
+            {
+                if (string.IsNullOrWhiteSpace(genreName)) continue;
+                int genreId = GetOrCreateGenreId(genreName, conn); 
+                
+                using var gcmd = new NpgsqlCommand("INSERT INTO media_genre (media_id, genre_id) VALUES (@m, @g)", conn, transaction);
+                gcmd.Parameters.AddWithValue("@m", mediaId);
+                gcmd.Parameters.AddWithValue("@g", genreId);
+                gcmd.ExecuteNonQuery();
+            }
+        }
+        
+        transaction.Commit();
     }
+    catch (Exception)
+    {
+        transaction.Rollback();
+        throw;
+    }
+}
 
     public void Delete(object obj)
     { 
