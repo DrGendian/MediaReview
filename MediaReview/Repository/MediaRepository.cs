@@ -116,8 +116,6 @@ public class MediaRepository: RepositoryBase, IRepository
     {
         using var cmd = new NpgsqlCommand(
             "INSERT INTO genre (name) VALUES (@name) ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id;", conn);
-
-        using var cmd = new NpgsqlCommand(sql, conn, trans);
         cmd.Parameters.AddWithValue("@name", genreName);
 
         return (int)cmd.ExecuteScalar();
@@ -206,7 +204,7 @@ public void Save(object obj)
             foreach (var genreName in media.genres.Distinct())
             {
                 if (string.IsNullOrWhiteSpace(genreName)) continue;
-                int genreId = GetOrCreateGenreId(genreName, conn); 
+                int genreId = GetOrCreateGenreId(genreName, conn, transaction); 
                 
                 using var gcmd = new NpgsqlCommand("INSERT INTO media_genre (media_id, genre_id) VALUES (@m, @g)", conn, transaction);
                 gcmd.Parameters.AddWithValue("@m", mediaId);
