@@ -219,6 +219,7 @@ namespace MediaReview.Handlers
                     if(!string.IsNullOrWhiteSpace(description)) media.description = description;
                     if (genres != Array.Empty<string>())
                     {
+                        media.genres.Clear();
                         foreach (var genre in genres)
                         {
                             media.genres.Add(genre);
